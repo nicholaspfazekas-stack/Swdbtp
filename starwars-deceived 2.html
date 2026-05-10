@@ -1,0 +1,2838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
+<title>Star Wars: Deceived by the Past</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; touch-action:manipulation; }
+  html, body { touch-action: pan-x pan-y; }
+  :root {
+    --gold: #c9a84c;
+    --red: #cc2200;
+    --blue: #4488ff;
+    --blue-glow: #88bbff;
+    --dark: #050508;
+    --mid: #0d0d1a;
+    --text: #e8dcc8;
+  }
+  body { background:#000; overflow:hidden; font-family:'Crimson Text',serif; width:100vw; height:100vh; }
+  canvas { display:block; touch-action:none; }
+
+  /* ── SCREENS ── */
+  .screen { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:var(--dark); transition:opacity 0.6s; }
+  .screen.hidden { opacity:0; pointer-events:none; }
+
+  /* TITLE */
+  #titleScreen { background: radial-gradient(ellipse at 50% 30%, #0a0a20 0%, #000 70%); }
+  .stars-bg { position:absolute; inset:0; overflow:hidden; }
+  .star { position:absolute; background:#fff; border-radius:50%; animation:twinkle 3s infinite alternate; }
+  @keyframes twinkle { from{opacity:0.2} to{opacity:1} }
+  .title-logo { text-align:center; z-index:2; }
+  .title-sub { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(10px,2vw,16px); letter-spacing:0.4em; text-transform:uppercase; margin-bottom:12px; }
+  .title-main { font-family:'Cinzel',serif; font-weight:900; color:var(--gold); font-size:clamp(28px,6vw,72px); text-shadow:0 0 40px #c9a84c88; line-height:1.1; }
+  .title-tagline { font-family:'Crimson Text',serif; font-style:italic; color:#8899bb; font-size:clamp(13px,2.5vw,22px); margin-top:16px; letter-spacing:0.1em; }
+  .menu-btns { display:flex; flex-direction:column; gap:14px; margin-top:48px; z-index:2; width:min(320px,80vw); }
+  .menu-btn { font-family:'Cinzel',serif; font-size:clamp(13px,2.5vw,18px); letter-spacing:0.15em; padding:14px 24px; border:1px solid var(--gold); background:transparent; color:var(--gold); cursor:pointer; transition:all 0.25s; text-transform:uppercase; }
+  .menu-btn:hover, .menu-btn:active { background:var(--gold); color:#000; }
+
+  /* SAVE SLOTS */
+  #saveScreen { gap:20px; }
+  .save-title { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(18px,4vw,32px); letter-spacing:0.2em; margin-bottom:10px; }
+  .save-grid { display:flex; flex-direction:column; gap:12px; width:min(420px,90vw); }
+  .save-slot { border:1px solid #c9a84c55; padding:16px 20px; cursor:pointer; transition:all 0.2s; display:flex; justify-content:space-between; align-items:center; background:#fdf9e8; color:#2a2000; }
+  .save-slot:hover, .save-slot:active { border-color:var(--gold); background:#faf0c0; }
+  .save-slot-name { font-family:'Cinzel',serif; color:#2a2000; font-size:clamp(12px,2.5vw,16px); }
+  .save-slot-info { color:#776644; font-size:clamp(10px,2vw,13px); }
+  .save-slot-stars { color:#a07820; font-size:clamp(12px,2.5vw,16px); }
+  .back-btn { font-family:'Cinzel',serif; color:#556; font-size:13px; letter-spacing:0.1em; background:none; border:none; cursor:pointer; margin-top:8px; text-transform:uppercase; }
+  .back-btn:hover { color:var(--text); }
+
+  /* DIALOGUE */
+  #dialogueScreen { background:radial-gradient(ellipse at 50% 80%, #0a0814 0%, #000 60%); justify-content:flex-end; padding-bottom:40px; }
+  .dialogue-scene { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:space-around; padding-bottom:220px; }
+  .char-sprite { width:clamp(80px,15vw,130px); display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .char-name-tag { font-family:'Cinzel',serif; font-size:clamp(9px,1.8vw,13px); color:var(--gold); letter-spacing:0.15em; }
+  .dialogue-box { width:min(700px,92vw); background:rgba(5,5,15,0.95); border:1px solid #2a2a3a; padding:24px 28px; z-index:10; }
+  .dialogue-speaker { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(11px,2.2vw,15px); letter-spacing:0.2em; margin-bottom:8px; }
+  .dialogue-text { color:var(--text); font-size:clamp(13px,2.5vw,18px); line-height:1.6; min-height:60px; }
+  .dialogue-continue { color:#445; font-size:clamp(10px,1.8vw,13px); text-align:right; margin-top:12px; font-style:italic; animation:pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+
+  /* GAME HUD */
+  #gameScreen { background:transparent; justify-content:flex-start; align-items:stretch; }
+  #gameCanvas { position:absolute; inset:0; width:100%; height:100%; }
+  #hud { position:absolute; top:0; left:0; right:0; padding:14px 16px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; z-index:10; }
+  .bars { display:flex; flex-direction:column; gap:6px; width:min(220px,42vw); }
+  .bar-row { display:flex; align-items:center; gap:8px; }
+  .bar-label { font-family:'Cinzel',serif; font-size:clamp(8px,1.6vw,11px); color:#889; width:14px; text-align:center; }
+  .bar-track { flex:1; height:clamp(7px,1.5vw,11px); background:#111; border:1px solid #222; border-radius:2px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:2px; transition:width 0.1s; }
+  #healthBar { background:linear-gradient(90deg,#aa2200,#ff4422); }
+  #staminaBar { background:linear-gradient(90deg,#226600,#44dd00); }
+  #forceBar { background:linear-gradient(90deg,#002288,#2266ff); }
+  .hud-right { display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+  .wave-display { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(11px,2.2vw,16px); letter-spacing:0.15em; }
+  .stars-display { color:var(--gold); font-size:clamp(14px,3vw,20px); }
+  .pull-cooldown { font-family:'Cinzel',serif; font-size:clamp(8px,1.5vw,11px); color:#446; }
+
+  /* TITLE STARS */
+  #titleStars { position:absolute; top:20px; right:20px; font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(16px,3.5vw,28px); letter-spacing:0.2em; text-shadow:0 0 20px #c9a84c; }
+
+  /* CONTROLS */
+  #controls { position:absolute; bottom:0; left:0; right:0; height:clamp(160px,28vh,220px); pointer-events:none; z-index:10; }
+  #joystickZone { position:absolute; left:20px; bottom:20px; width:clamp(120px,22vw,160px); height:clamp(120px,22vw,160px); pointer-events:all; }
+  #joystickBase { width:100%; height:100%; border-radius:50%; border:2px solid rgba(200,180,100,0.3); background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+  #joystickKnob { width:44%; height:44%; border-radius:50%; background:radial-gradient(circle, rgba(200,180,100,0.6), rgba(200,180,100,0.2)); border:1px solid rgba(200,180,100,0.5); position:absolute; transition:transform 0.05s; }
+  #blockBtn { position:absolute; left:calc(20px + clamp(120px,22vw,160px) + 14px); bottom:20px; pointer-events:all; }
+  #rightControls { position:absolute; right:20px; bottom:20px; display:flex; flex-direction:column; gap:12px; align-items:flex-end; pointer-events:all; }
+  .action-btn { border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-weight:700; cursor:pointer; border:2px solid; transition:all 0.1s; pointer-events:all; }
+  .action-btn:active { transform:scale(0.9); }
+  #slashBtn { width:clamp(64px,12vw,84px); height:clamp(64px,12vw,84px); background:rgba(68,136,255,0.15); border-color:var(--blue); color:var(--blue-glow); font-size:clamp(10px,2vw,14px); letter-spacing:0.05em; }
+  #slashBtn.active { background:rgba(68,136,255,0.4); }
+  #pullBtn { width:clamp(54px,10vw,70px); height:clamp(54px,10vw,70px); background:rgba(100,50,200,0.15); border-color:#7744cc; color:#aa88ff; font-size:clamp(9px,1.8vw,12px); }
+  #pullBtn.cooldown { opacity:0.4; }
+  #runBtn { width:clamp(54px,10vw,70px); height:clamp(54px,10vw,70px); background:rgba(200,160,50,0.1); border-color:#886622; color:#c9a84c; font-size:clamp(9px,1.8vw,12px); }
+  #runBtn.active { background:rgba(200,160,50,0.3); }
+  #blockBtn { width:clamp(64px,12vw,84px); height:clamp(64px,12vw,84px); background:rgba(80,200,120,0.12); border-color:#44bb66; color:#88ffaa; font-size:clamp(9px,1.8vw,12px); letter-spacing:0.04em; }
+  #blockBtn.active { background:rgba(80,200,120,0.45); box-shadow:0 0 18px #44bb6688; }
+
+  /* WAVE BANNER */
+  #waveBanner { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-family:'Cinzel',serif; font-size:clamp(22px,5vw,48px); color:var(--gold); text-shadow:0 0 30px #c9a84c; letter-spacing:0.3em; text-align:center; z-index:20; opacity:0; pointer-events:none; transition:opacity 0.5s; text-transform:uppercase; }
+  #waveBanner.show { opacity:1; }
+
+  /* CHECKPOINT */
+  #checkpointScreen { background:rgba(0,0,0,0.85); z-index:30; }
+  .checkpoint-inner { text-align:center; }
+  .checkpoint-title { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(20px,4.5vw,40px); letter-spacing:0.25em; margin-bottom:16px; }
+  .checkpoint-sub { color:var(--text); font-size:clamp(13px,2.5vw,18px); margin-bottom:32px; font-style:italic; }
+  .checkpoint-btn { font-family:'Cinzel',serif; font-size:clamp(13px,2.5vw,18px); padding:14px 40px; border:1px solid var(--gold); background:transparent; color:var(--gold); cursor:pointer; letter-spacing:0.15em; text-transform:uppercase; }
+  .checkpoint-btn:hover { background:var(--gold); color:#000; }
+
+  /* GAME OVER */
+  #gameOverScreen { background:rgba(0,0,0,0.9); z-index:30; gap:16px; }
+  .go-title { font-family:'Cinzel',serif; color:#cc2200; font-size:clamp(24px,5vw,52px); letter-spacing:0.2em; text-shadow:0 0 30px #cc2200; }
+  .go-sub { color:#556; font-style:italic; font-size:clamp(13px,2.5vw,18px); }
+  .go-btns { display:flex; gap:16px; margin-top:20px; }
+
+  /* VICTORY */
+  #victoryScreen { background:radial-gradient(ellipse at 50% 50%, #0a0820 0%, #000 70%); z-index:30; gap:20px; }
+  .victory-title { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(26px,5.5vw,56px); letter-spacing:0.25em; text-shadow:0 0 40px #c9a84c; }
+  .victory-stars { font-size:clamp(28px,7vw,64px); letter-spacing:0.2em; }
+  .victory-msg { color:var(--text); font-style:italic; font-size:clamp(13px,2.5vw,20px); text-align:center; max-width:500px; line-height:1.7; }
+  .credits-scroll { overflow:hidden; max-height:200px; width:min(400px,85vw); }
+  .credits-inner { animation: scrollUp 12s linear forwards; }
+  @keyframes scrollUp { from{transform:translateY(100%)} to{transform:translateY(-100%)} }
+  .credit-line { color:#556; font-size:clamp(11px,2vw,15px); text-align:center; padding:4px 0; }
+  .credit-line.bold { color:var(--gold); font-family:'Cinzel',serif; font-size:clamp(13px,2.5vw,18px); letter-spacing:0.1em; }
+
+  /* SETTINGS */
+  .settings-btn { position:absolute; top:20px; left:20px; background:transparent; border:1px solid var(--gold); color:var(--gold); font-size:clamp(18px,4vw,32px); width:clamp(44px,10vw,60px); height:clamp(44px,10vw,60px); cursor:pointer; border-radius:6px; transition:all 0.2s; z-index:100; }
+  .settings-btn:hover { background:var(--gold); color:#000; }
+  .settings-btn:active { transform:scale(0.95); }
+  .cheat-btn { position:absolute; top:20px; left:calc(20px + clamp(44px,10vw,60px) + 10px); background:transparent; border:1px solid #cc2200; color:#cc2200; font-size:clamp(16px,3.5vw,28px); width:clamp(44px,10vw,60px); height:clamp(44px,10vw,60px); cursor:pointer; border-radius:6px; transition:all 0.2s; z-index:100; }
+  .cheat-btn:hover { background:#cc2200; color:#fff; }
+  .cheat-btn:active { transform:scale(0.95); }
+  #settingsScreen { z-index:40; gap:0; }
+  .settings-panel { background:rgba(5,5,15,0.95); border:1px solid var(--gold); padding:32px 28px; border-radius:8px; width:min(360px,90vw); max-width:360px; }
+  .settings-title { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(18px,3.5vw,28px); letter-spacing:0.2em; margin-bottom:24px; text-align:center; }
+  .settings-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; padding:12px 0; border-bottom:1px solid #3a3a4a; }
+  .settings-item label { font-family:'Cinzel',serif; color:var(--text); font-size:clamp(13px,2.5vw,16px); letter-spacing:0.1em; }
+  .settings-item input[type="checkbox"] { width:clamp(20px,5vw,28px); height:clamp(20px,5vw,28px); cursor:pointer; accent-color:var(--gold); }
+
+  /* SEQUEL */
+  .sequel-btn { font-family:'Cinzel',serif; font-size:clamp(10px,2vw,14px); letter-spacing:0.15em; padding:10px 18px; border:1px solid #444; background:transparent; color:#444; cursor:default; text-transform:uppercase; margin-top:6px; width:100%; }
+  .sequel-btn.unlocked { border-color:#cc2200; color:#ff4422; cursor:pointer; animation: sequelPulse 2s infinite alternate; }
+  .sequel-btn.unlocked:hover, .sequel-btn.unlocked:active { background:#cc2200; color:#fff; }
+  @keyframes sequelPulse { from{box-shadow:0 0 0 #cc220000} to{box-shadow:0 0 18px #cc220088} }
+  .sequel-lock-hint { font-size:clamp(9px,1.6vw,11px); color:#333; font-style:italic; margin-top:4px; text-align:center; font-family:'Crimson Text',serif; }
+  #sequelUnlockedBanner { position:fixed; top:0; left:0; right:0; background:#cc2200; color:#fff; font-family:'Cinzel',serif; font-size:clamp(12px,2.5vw,18px); text-align:center; padding:14px; z-index:999; letter-spacing:0.2em; transform:translateY(-100%); transition:transform 0.5s; }
+  #sequelUnlockedBanner.show { transform:translateY(0); }
+
+  /* SITH CHAMBER BACKGROUND */
+  .sith-bg { background: radial-gradient(ellipse at 50% 30%, #0a0005 0%, #000 70%); }
+
+  /* PAUSE BUTTON */
+  #pauseBtn { position:absolute; top:14px; left:50%; transform:translateX(-50%); background:transparent; border:1px solid rgba(201,168,76,0.5); color:var(--gold); font-size:clamp(14px,3vw,20px); width:clamp(38px,8vw,52px); height:clamp(38px,8vw,52px); cursor:pointer; border-radius:6px; transition:all 0.2s; z-index:15; pointer-events:all; display:flex; align-items:center; justify-content:center; }
+  #pauseBtn:hover, #pauseBtn:active { background:var(--gold); color:#000; }
+
+  /* PAUSE MENU OVERLAY */
+  #pauseScreen { position:absolute; inset:0; background:rgba(0,0,0,0.82); z-index:50; display:none; flex-direction:column; align-items:center; justify-content:center; gap:0; }
+  #pauseScreen.active { display:flex; }
+  .pause-panel { background:rgba(5,5,15,0.97); border:1px solid var(--gold); padding:36px 32px; border-radius:8px; width:min(320px,85vw); display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .pause-title { font-family:'Cinzel',serif; color:var(--gold); font-size:clamp(18px,4vw,28px); letter-spacing:0.3em; margin-bottom:8px; text-align:center; }
+  .pause-wave-info { font-family:'Cinzel',serif; color:#556; font-size:clamp(10px,2vw,13px); letter-spacing:0.15em; margin-bottom:4px; text-align:center; }
+  .pause-btn { font-family:'Cinzel',serif; font-size:clamp(13px,2.5vw,16px); letter-spacing:0.15em; padding:13px 20px; border:1px solid var(--gold); background:transparent; color:var(--gold); cursor:pointer; transition:all 0.2s; text-transform:uppercase; width:100%; }
+  .pause-btn:hover, .pause-btn:active { background:var(--gold); color:#000; }
+  .pause-btn.danger { border-color:#cc2200; color:#ff4422; }
+  .pause-btn.danger:hover, .pause-btn.danger:active { background:#cc2200; color:#fff; }
+  .pause-saved-msg { font-family:'Cinzel',serif; font-size:clamp(10px,2vw,12px); color:#44dd00; letter-spacing:0.1em; height:18px; text-align:center; }
+</style>
+</head>
+<body>
+<div id="sequelUnlockedBanner">⚡ SEQUEL UNLOCKED ⚡</div>
+
+<!-- TITLE SCREEN -->
+<div class="screen" id="titleScreen">
+  <div id="titleStars"></div>
+  <div class="stars-bg" id="starsBg"></div>
+  <button class="settings-btn" onclick="showScreen('settingsScreen')" title="Settings">⚙</button>
+  <button class="cheat-btn" onclick="showScreen('cheatScreen')" title="Unlock Code">🔒</button>
+  <div class="title-logo">
+    <div class="title-sub">A long time ago in a galaxy far, far away...</div>
+    <div class="title-main">STAR WARS</div>
+    <div class="title-main" style="font-size:clamp(18px,3.5vw,42px);margin-top:6px;">Deceived by the Past</div>
+    <div class="title-tagline">"The greatest betrayal is the one born of grief."</div>
+  </div>
+  <div class="menu-btns">
+    <button class="menu-btn" onclick="startNewGame()">New Game</button>
+    <button class="menu-btn" onclick="showScreen('loadScreen')">Load Game</button>
+    <div id="sequelBtnWrap" style="width:100%;display:flex;flex-direction:column;align-items:center;margin-top:8px;">
+      <button class="sequel-btn" id="sequelBtn" onclick="tryStartSequel()">SEQUEL / ???</button>
+      <div class="sequel-lock-hint" id="sequelHint"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS SCREEN -->
+<div class="screen hidden" id="settingsScreen">
+  <div class="settings-panel">
+    <div class="settings-title">⚙ SETTINGS</div>
+    <div class="settings-item">
+      <label for="musicToggle">🎵 Music</label>
+      <input type="checkbox" id="musicToggle" onchange="toggleMusic()">
+    </div>
+    <div class="settings-item">
+      <label for="soundToggle">🔊 Sound Effects</label>
+      <input type="checkbox" id="soundToggle" onchange="toggleSound()">
+    </div>
+    <div class="settings-item">
+      <label for="hitboxToggle">🎯 Show Hitboxes</label>
+      <input type="checkbox" id="hitboxToggle" onchange="toggleHitboxes()">
+    </div>
+    <button class="menu-btn" style="margin-top:24px" onclick="showScreen('titleScreen')">← Back</button>
+  </div>
+</div>
+
+<!-- CHEAT CODE SCREEN -->
+<div class="screen hidden" id="cheatScreen">
+  <div class="settings-panel" style="text-align:center;">
+    <div class="settings-title">🔒 ENTER CODE</div>
+    <div style="color:#556;font-style:italic;font-size:clamp(11px,2vw,14px);margin-bottom:20px;font-family:'Crimson Text',serif;">Enter the secret code to unlock the sequel</div>
+    <input id="cheatInput" type="number" placeholder="_ _ _ _ _" style="width:100%;padding:14px;font-family:'Cinzel',serif;font-size:clamp(18px,4vw,28px);text-align:center;background:#0a0a12;border:1px solid #c9a84c55;color:#c9a84c;letter-spacing:0.3em;border-radius:4px;outline:none;" maxlength="5">
+    <div id="cheatMsg" style="height:24px;margin-top:12px;font-family:'Cinzel',serif;font-size:clamp(11px,2vw,14px);"></div>
+    <button class="menu-btn" style="margin-top:12px;width:100%;" onclick="submitCheatCode()">ENTER</button>
+    <button class="back-btn" style="margin-top:16px;" onclick="showScreen('titleScreen')">← Back</button>
+  </div>
+</div>
+
+<!-- LOAD SCREEN -->
+<div class="screen hidden" id="loadScreen">
+  <div class="save-title">Load Game</div>
+  <div class="save-grid" id="loadSlots"></div>
+  <button class="back-btn" onclick="showScreen('titleScreen')">← Back</button>
+</div>
+
+<!-- SAVE SLOT PICKER (new game) -->
+<div class="screen hidden" id="saveScreen">
+  <div class="save-title">Choose Save Slot</div>
+  <div class="save-grid" id="saveSlots"></div>
+  <button class="back-btn" onclick="showScreen('titleScreen')">← Back</button>
+</div>
+
+<!-- DIALOGUE SCREEN -->
+<div class="screen hidden" id="dialogueScreen">
+  <div class="dialogue-scene" id="dialogueScene"></div>
+  <div class="dialogue-box" id="dialogueBox">
+    <div class="dialogue-speaker" id="dialogueSpeaker"></div>
+    <div class="dialogue-text" id="dialogueText"></div>
+    <div class="dialogue-continue" id="dialogueContinue">Tap to continue ▼</div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div class="screen hidden" id="gameScreen">
+  <canvas id="gameCanvas"></canvas>
+  <div id="hud">
+    <div class="bars">
+      <div class="bar-row">
+        <div class="bar-label" style="color:#ff4422">♥</div>
+        <div class="bar-track"><div class="bar-fill" id="healthBar" style="width:100%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:#44dd00">⚡</div>
+        <div class="bar-track"><div class="bar-fill" id="staminaBar" style="width:100%"></div></div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:#2266ff">◈</div>
+        <div class="bar-track"><div class="bar-fill" id="forceBar" style="width:100%"></div></div>
+      </div>
+    </div>
+    <div class="hud-right">
+      <div class="stars-display" id="starsDisplay">☆</div>
+      <div class="wave-display" id="waveDisplay">WAVE 1</div>
+      <div class="pull-cooldown" id="pullCooldownDisplay"></div>
+    </div>
+  </div>
+  <button id="pauseBtn" onclick="pauseGame()">⏸</button>
+  <div id="waveBanner"></div>
+
+  <!-- PAUSE OVERLAY (inside gameScreen so it stays on top of canvas) -->
+  <div id="pauseScreen">
+    <div class="pause-panel">
+      <div class="pause-title">⏸ PAUSED</div>
+      <div class="pause-wave-info" id="pauseWaveInfo"></div>
+      <div class="pause-saved-msg" id="pauseSavedMsg"></div>
+      <button class="pause-btn" onclick="pauseSaveGame()">💾 Save Game</button>
+      <button class="pause-btn" onclick="resumeGame()">▶ Resume</button>
+      <button class="pause-btn danger" onclick="pauseGoToMenu()">← Main Menu</button>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div id="joystickZone">
+      <div id="joystickBase"><div id="joystickKnob"></div></div>
+    </div>
+    <button class="action-btn" id="blockBtn"
+      ontouchstart="startBlock()" ontouchend="stopBlock()"
+      onmousedown="startBlock()" onmouseup="stopBlock()" onmouseleave="stopBlock()">BLOCK</button>
+    <div id="rightControls">
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="action-btn" id="runBtn" ontouchstart="startRun()" ontouchend="stopRun()" onmousedown="startRun()" onmouseup="stopRun()">RUN</button>
+        <button class="action-btn" id="pullBtn" ontouchstart="doPull()" onmousedown="doPull()">PULL</button>
+      </div>
+      <button class="action-btn" id="slashBtn" ontouchstart="doSlash()" onmousedown="doSlash()">SLASH</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKPOINT SCREEN -->
+<div class="screen hidden" id="checkpointScreen">
+  <div class="checkpoint-inner">
+    <div class="checkpoint-title">⬟ Checkpoint ⬟</div>
+    <div class="checkpoint-sub">The Force is with you. Set your position here<br>and be restored to full strength if you fall.</div>
+    <button class="checkpoint-btn" onclick="confirmCheckpoint()">Set Checkpoint & Continue</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div class="screen hidden" id="gameOverScreen">
+  <div class="go-title">YOU HAVE FALLEN</div>
+  <div class="go-sub" id="gameOverMsg">The darkness consumed you...</div>
+  <div class="go-btns">
+    <button class="menu-btn" id="respawnBtn" onclick="respawnFromCheckpoint()" style="display:none">Respawn</button>
+    <button class="menu-btn" onclick="restartFromWave1()">Restart Wave 1</button>
+    <button class="menu-btn" onclick="showScreen('titleScreen')">Main Menu</button>
+  </div>
+</div>
+
+<!-- VICTORY -->
+<div class="screen hidden" id="victoryScreen">
+  <div class="victory-title">VICTORY</div>
+  <div class="victory-stars" id="victoryStars"></div>
+  <div class="victory-msg" id="victoryMsg"></div>
+  <div class="credits-scroll">
+    <div class="credits-inner">
+      <div class="credit-line bold">Star Wars: Deceived by the Past</div>
+      <div class="credit-line">A story of grief, vengeance, and redemption</div>
+      <div class="credit-line" style="margin-top:16px">Lord Velkris — once a man of peace</div>
+      <div class="credit-line">whose world was erased by those sworn to protect it</div>
+      <div class="credit-line" style="margin-top:16px">His path led him to darkness</div>
+      <div class="credit-line">but you chose the light</div>
+      <div class="credit-line" style="margin-top:16px">May the Force be with you</div>
+      <div class="credit-line bold" style="margin-top:24px">Always.</div>
+    </div>
+  </div>
+  <button class="menu-btn" style="margin-top:20px" onclick="showScreen('titleScreen')">Main Menu</button>
+</div>
+
+<!-- SEQUEL SAVE PICKER -->
+<div class="screen hidden" id="sequelSaveScreen">
+  <div class="save-title" style="color:#ff4422;">Choose Save Slot — SEQUEL</div>
+  <div class="save-grid" id="sequelSaveSlots"></div>
+  <button class="back-btn" onclick="showScreen('titleScreen')">← Back</button>
+</div>
+
+<!-- SEQUEL VICTORY -->
+<div class="screen hidden" id="sequelVictoryScreen" style="background:radial-gradient(ellipse at 50% 50%,#0a0005 0%,#000 70%);z-index:30;gap:20px;">
+  <div style="font-family:'Cinzel',serif;color:#ff4422;font-size:clamp(22px,5vw,52px);letter-spacing:0.25em;text-shadow:0 0 40px #ff4422;">THE DARKNESS FALLS</div>
+  <div id="sequelVictoryStars" style="font-size:clamp(24px,6vw,56px);letter-spacing:0.2em;"></div>
+  <div id="sequelVictoryMsg" style="color:var(--text);font-style:italic;font-size:clamp(13px,2.5vw,20px);text-align:center;max-width:500px;line-height:1.7;padding:0 20px;"></div>
+  <div style="overflow:hidden;max-height:200px;width:min(400px,85vw);">
+    <div style="animation:scrollUp 16s linear forwards;">
+      <div style="color:#ff4422;font-family:'Cinzel',serif;font-size:clamp(13px,2.5vw,18px);letter-spacing:0.1em;text-align:center;padding:4px 0;">Star Wars: ???</div>
+      <div style="color:#556;font-size:clamp(11px,2vw,15px);text-align:center;padding:4px 0;">The shadow behind the shadow</div>
+      <div style="color:#556;font-size:clamp(11px,2vw,15px);text-align:center;padding:4px 0;margin-top:16px;">Lord Veylix — architect of grief</div>
+      <div style="color:#556;font-size:clamp(11px,2vw,15px);text-align:center;padding:4px 0;">who shaped Velkris into a weapon</div>
+      <div style="color:#556;font-size:clamp(11px,2vw,15px);text-align:center;padding:4px 0;margin-top:16px;">His plan died with him</div>
+      <div style="color:#556;font-size:clamp(11px,2vw,15px);text-align:center;padding:4px 0;">But the dark side... always returns</div>
+      <div style="color:#ff4422;font-family:'Cinzel',serif;font-size:clamp(13px,2.5vw,18px);letter-spacing:0.1em;text-align:center;padding:4px 0;margin-top:24px;">To be continued...</div>
+    </div>
+  </div>
+  <button class="menu-btn" style="margin-top:20px;border-color:#cc2200;color:#ff4422;" onclick="showScreen('titleScreen')">Main Menu</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  SETTINGS SYSTEM
+// ══════════════════════════════════════════════
+const SETTINGS_KEY = 'sw_deceived_settings';
+const settings = {
+  musicEnabled: true,
+  soundEnabled: true,
+  showHitboxes: false
+};
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    if (saved) Object.assign(settings, saved);
+  } catch(e) {}
+  applySettings();
+}
+
+function saveSettings() {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function applySettings() {
+  document.getElementById('musicToggle').checked = settings.musicEnabled;
+  document.getElementById('soundToggle').checked = settings.soundEnabled;
+  document.getElementById('hitboxToggle').checked = settings.showHitboxes;
+}
+
+function toggleMusic() {
+  settings.musicEnabled = !settings.musicEnabled;
+  saveSettings();
+  if (!settings.musicEnabled) stopStarWarsTheme();
+  else startStarWarsTheme();
+}
+
+function toggleSound() {
+  settings.soundEnabled = !settings.soundEnabled;
+  saveSettings();
+}
+
+function toggleHitboxes() {
+  settings.showHitboxes = !settings.showHitboxes;
+  saveSettings();
+}
+
+// ══════════════════════════════════════════════
+//  SOUND SYSTEM
+// ══════════════════════════════════════════════
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+// Background music state
+let bgMusicOscillators = [];
+let bgMusicGain = null;
+let themeOscillators = [];
+
+function playTone(freq, duration, type = 'sine', volume = 0.3) {
+  if (!settings.soundEnabled) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(audioCtx.currentTime);
+  osc.stop(audioCtx.currentTime + duration);
+}
+
+function playSoundSlash() {
+  playTone(400, 0.1, 'triangle', 0.25);
+  playTone(300, 0.12, 'square', 0.15);
+}
+
+function playSoundHit() {
+  playTone(150, 0.08, 'square', 0.3);
+  playTone(100, 0.1, 'sine', 0.2);
+}
+
+function playSoundPull() {
+  playTone(200, 0.05, 'sine', 0.2);
+  playTone(300, 0.08, 'sine', 0.25);
+  playTone(400, 0.1, 'sine', 0.3);
+}
+
+function playSoundShoot() {
+  playTone(800, 0.06, 'square', 0.2);
+  playTone(600, 0.08, 'square', 0.15);
+}
+
+function playSoundBlasterHit() {
+  playTone(500, 0.08, 'square', 0.25);
+  playTone(300, 0.1, 'sine', 0.2);
+}
+
+function playSoundLightsaberClash() {
+  playTone(1200, 0.05, 'triangle', 0.3);
+  playTone(800, 0.08, 'square', 0.25);
+  playTone(600, 0.1, 'sine', 0.2);
+}
+
+function playSoundDeath() {
+  playTone(300, 0.1, 'sine', 0.3);
+  playTone(200, 0.12, 'sine', 0.25);
+  playTone(100, 0.2, 'sine', 0.2);
+}
+
+function playSoundVictory() {
+  playTone(523, 0.15, 'sine', 0.3);  // C
+  playTone(659, 0.15, 'sine', 0.3);  // E
+  playTone(784, 0.3, 'sine', 0.35);  // G
+}
+
+function playSoundGameOver() {
+  playTone(400, 0.1, 'sine', 0.3);
+  playTone(300, 0.1, 'sine', 0.3);
+  playTone(200, 0.2, 'sine', 0.3);
+}
+
+function playSoundWave() {
+  playTone(600, 0.2, 'sine', 0.25);
+  playTone(800, 0.3, 'sine', 0.3);
+}
+
+// Star Wars iconic theme (simplified)
+function startStarWarsTheme() {
+  if (!settings.musicEnabled) return;
+  stopStarWarsTheme();
+  
+  const themeGain = audioCtx.createGain();
+  themeGain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  themeGain.connect(audioCtx.destination);
+  
+  // Iconic Star Wars opening theme (Main Theme)
+  // The famous 20th Century Fox opening followed by the main theme
+  const notes = [
+    // Fox fanfare opening (dramatic intro)
+    { freq: 349.2, dur: 0.3 },   // F4
+    { freq: 587.3, dur: 0.3 },   // D5
+    { freq: 659.3, dur: 0.6 },   // E5
+    { freq: 880, dur: 0.3 },     // A5
+    { freq: 932.3, dur: 0.6 },   // A#5
+    
+    // Main theme - the iconic melody
+    { freq: 293.7, dur: 0.5 },   // D4
+    { freq: 293.7, dur: 0.5 },   // D4
+    { freq: 293.7, dur: 0.5 },   // D4
+    { freq: 349.2, dur: 0.25 },  // F4
+    { freq: 440, dur: 0.25 },    // A4
+    
+    { freq: 293.7, dur: 0.5 },   // D4
+    { freq: 349.2, dur: 0.25 },  // F4
+    { freq: 440, dur: 0.25 },    // A4
+    { freq: 293.7, dur: 1 },     // D4 (longer note)
+    
+    { freq: 587.3, dur: 0.5 },   // D5
+    { freq: 587.3, dur: 0.5 },   // D5
+    { freq: 587.3, dur: 0.5 },   // D5
+    { freq: 659.3, dur: 0.25 },  // E5
+    { freq: 783.9, dur: 0.25 },  // G5
+    
+    { freq: 587.3, dur: 0.5 },   // D5
+    { freq: 659.3, dur: 0.25 },  // E5
+    { freq: 783.9, dur: 0.25 },  // G5
+    { freq: 587.3, dur: 1 },     // D5 (longer note)
+  ];
+  
+  let currentTime = audioCtx.currentTime;
+  function playThemeLoop() {
+    if (themeOscillators.length === 0) return;
+    
+    notes.forEach(note => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(note.freq, currentTime);
+      gain.gain.setValueAtTime(0.12, currentTime);
+      gain.gain.linearRampToValueAtTime(0.08, currentTime + note.dur);
+      osc.connect(gain);
+      gain.connect(themeGain);
+      osc.start(currentTime);
+      osc.stop(currentTime + note.dur);
+      currentTime += note.dur;
+    });
+    
+    // Loop after delay
+    currentTime += 0.5;
+    if (themeOscillators.length > 0) {
+      setTimeout(playThemeLoop, (notes.reduce((t,n) => t + n.dur, 0) + 0.5) * 1000);
+    }
+  }
+  
+  // Create a dummy oscillator to track if theme is active
+  const dummy = audioCtx.createOscillator();
+  themeOscillators.push(dummy);
+  
+  playThemeLoop();
+}
+
+function stopStarWarsTheme() {
+  themeOscillators = [];
+}
+
+// Velkris meditation + wrath music
+function startVelkrisMusicLoop() {
+  if (!settings.musicEnabled) return;
+  stopVelkrisMusic();
+  bgMusicGain = audioCtx.createGain();
+  bgMusicGain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  bgMusicGain.connect(audioCtx.destination);
+  
+  // Deep meditation base note
+  const baseOsc = audioCtx.createOscillator();
+  baseOsc.type = 'sine';
+  baseOsc.frequency.setValueAtTime(110, audioCtx.currentTime); // A2
+  baseOsc.connect(bgMusicGain);
+  bgMusicOscillators.push(baseOsc);
+  baseOsc.start();
+  
+  // Wrath harmonic (major 3rd up, dissonant minor seconds)
+  const wrathOsc = audioCtx.createOscillator();
+  wrathOsc.type = 'sawtooth';
+  const wrathGain = audioCtx.createGain();
+  wrathGain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  wrathOsc.frequency.setValueAtTime(137, audioCtx.currentTime); // C#3 (dissonant with A2)
+  wrathOsc.connect(wrathGain);
+  wrathGain.connect(bgMusicGain);
+  bgMusicOscillators.push(wrathOsc);
+  wrathOsc.start();
+  
+  // Tremolo effect (pulsing tension)
+  const tremoloOsc = audioCtx.createOscillator();
+  tremoloOsc.frequency.setValueAtTime(3, audioCtx.currentTime); // 3 Hz pulsing
+  const tremoloGain = audioCtx.createGain();
+  tremoloGain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  tremoloOsc.connect(tremoloGain);
+  tremoloGain.connect(bgMusicGain.gain);
+  bgMusicOscillators.push(tremoloOsc);
+  tremoloOsc.start();
+  
+  // Meditation high note (ethereal counterpoint)
+  const meditationOsc = audioCtx.createOscillator();
+  meditationOsc.type = 'sine';
+  const meditationGain = audioCtx.createGain();
+  meditationGain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+  meditationOsc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+  meditationOsc.connect(meditationGain);
+  meditationGain.connect(bgMusicGain);
+  bgMusicOscillators.push(meditationOsc);
+  meditationOsc.start();
+}
+
+function stopVelkrisMusic() {
+  bgMusicOscillators.forEach(osc => {
+    try { osc.stop(audioCtx.currentTime); } catch(e) {}
+  });
+  bgMusicOscillators = [];
+}
+
+
+// ══════════════════════════════════════════════
+//  SAVE SYSTEM
+// ══════════════════════════════════════════════
+const SAVE_KEY = 'sw_deceived_saves';
+const TOTAL_STARS_KEY = 'sw_deceived_total_stars';
+const NODEATH_WINS_KEY = 'sw_deceived_nodeath_wins';
+const SEQUEL_UNLOCKED_KEY = 'sw_deceived_sequel_unlocked';
+
+function getSaves() {
+  const base = [{},{},{},{},{},{}];
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVE_KEY)) || [];
+    for (let i = 0; i < 6; i++) base[i] = saved[i] || {};
+    return base;
+  } catch { return base; }
+}
+function writeSaves(saves) { localStorage.setItem(SAVE_KEY, JSON.stringify(saves)); }
+
+function getNoDeathWins() {
+  try { return parseInt(localStorage.getItem(NODEATH_WINS_KEY)) || 0; }
+  catch { return 0; }
+}
+function addNoDeathWin() {
+  const n = getNoDeathWins() + 1;
+  localStorage.setItem(NODEATH_WINS_KEY, n);
+  if (n >= 3) { localStorage.setItem(SEQUEL_UNLOCKED_KEY, '1'); updateTitleMenu(); }
+}
+function isSequelUnlocked() {
+  return localStorage.getItem(SEQUEL_UNLOCKED_KEY) === '1';
+}
+
+function getTotalStars() {
+  try { return parseInt(localStorage.getItem(TOTAL_STARS_KEY)) || 0; }
+  catch { return 0; }
+}
+function addTotalStars(count) {
+  const total = getTotalStars() + count;
+  localStorage.setItem(TOTAL_STARS_KEY, total);
+  game.totalStars = total;
+  updateTitleStars();
+}
+
+function updateTitleStars() {
+  const el = document.getElementById('titleStars');
+  if (el) {
+    const t = getTotalStars();
+    el.textContent = t > 0 ? '★ ' + t : '';
+  }
+}
+
+function saveGame() {
+  if (game.slot == null) return;
+  const saves = getSaves();
+  saves[game.slot] = {
+    wave: game.wave,
+    checkpointSet: game.checkpointSet,
+    checkpointWave: game.checkpointWave,
+    stars: game.stars,
+    deaths: game.deaths,
+    timestamp: Date.now()
+  };
+  writeSaves(saves);
+}
+function slotLabel(s) {
+  if (!s || !s.wave) return 'Empty Slot';
+  const d = new Date(s.timestamp);
+  return `Wave ${s.wave} — ${d.toLocaleDateString()}`;
+}
+function slotStars(s) {
+  if (!s || !s.stars) return '';
+  return '★'.repeat(s.stars) + '☆'.repeat(Math.max(0,3-s.stars));
+}
+
+// ══════════════════════════════════════════════
+//  SCREEN MANAGEMENT
+// ══════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  if (id === 'titleScreen') {
+    updateTitleStars();
+    startStarWarsTheme();
+  } else {
+    stopStarWarsTheme();
+  }
+}
+
+// Stars background
+(function() {
+  const bg = document.getElementById('starsBg');
+  for (let i = 0; i < 120; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2.5 + 0.5;
+    s.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s`;
+    bg.appendChild(s);
+  }
+})();
+
+// ══════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════
+const game = {
+  slot: null, wave: 1, health: 120, stamina: 150, force: 100,
+  staminaRegen: false, forceRegen: false,
+  staminaTimer: null, forceTimer: null,
+  checkpointSet: false, checkpointWave: null,
+  deaths: 0, stars: 0, totalStars: 0,
+  running: false, pullCooldown: false, pullCooldownTimer: null,
+  saveInterval: null,
+  autoSaveTimer: null
+};
+
+const PLAYER_DMG_EARLY = 5, PLAYER_DMG_LATE = 15;
+const WAVE_CONFIG = [
+  { enemies: 3, type: 'trooper', hp: 10, dmg: 3 },  // wave 1
+  { enemies: 3, type: 'trooper', hp: 10, dmg: 3 },  // wave 2
+  { enemies: 8, type: 'trooper', hp: 10, dmg: 3 },  // wave 3
+  { enemies: 2, type: 'acolyte', hp: 30, dmg: 10 }, // wave 4
+  { enemies: 1, type: 'apprentice', hp: 55, dmg: 20 }, // wave 5
+  { enemies: 1, type: 'velkris', hp: 175, dmg: 25 } // wave 6
+];
+
+// ══════════════════════════════════════════════
+//  SAVE SLOT UI
+// ══════════════════════════════════════════════
+function buildSaveUI(containerId, onClick) {
+  const saves = getSaves();
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  saves.forEach((s,i) => {
+    const isEmpty = !s || !s.wave;
+
+    // Wrapper clips the sliding content
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;overflow:hidden;border-radius:2px;';
+
+    // Red delete bg revealed on swipe
+    const deleteBg = document.createElement('div');
+    deleteBg.style.cssText = 'position:absolute;inset:0;background:#220000;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;color:#ff4422;font-size:18px;letter-spacing:0.05em;font-family:Cinzel,serif;font-size:13px;';
+    deleteBg.textContent = isEmpty ? '' : '🗑  DELETE';
+
+    // Sliding slot
+    const div = document.createElement('div');
+    div.className = 'save-slot';
+    div.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;transition:transform 0.2s ease;will-change:transform;background:#fdf9e8;padding:16px 20px;border:1px solid #c9a84c55;';
+    div.innerHTML = `
+      <div style="flex:1;font-family:Cinzel,serif;color:#2a2000;font-size:clamp(12px,2.5vw,16px);">Slot ${i+1}: ${slotLabel(s)}</div>
+      <div style="min-width:52px;text-align:right;color:#a07820;">${slotStars(s)}</div>
+    `;
+
+    wrapper.appendChild(deleteBg);
+    wrapper.appendChild(div);
+    el.appendChild(wrapper);
+
+    // ── Swipe logic ──
+    let startX = 0, startY = 0, currentX = 0, swiping = false, confirmed = false;
+    const THRESHOLD = 80; // px to trigger delete
+
+    function onStart(x, y) {
+      if (isEmpty) return;
+      startX = x; startY = y; currentX = 0; swiping = true; confirmed = false;
+      div.style.transition = 'none';
+    }
+    function onMove(x, y) {
+      if (!swiping) return;
+      const dx = x - startX;
+      const dy = y - startY;
+      if (Math.abs(dy) > Math.abs(dx) + 10) { swiping = false; return; } // vertical scroll, bail
+      if (dx > 0) return; // only left swipe
+      currentX = Math.max(dx, -160);
+      div.style.transform = `translateX(${currentX}px)`;
+      deleteBg.style.opacity = Math.min(1, Math.abs(currentX) / THRESHOLD);
+    }
+    function onEnd(x) {
+      if (!swiping) return;
+      swiping = false;
+      const dx = x - startX;
+      if (dx < -THRESHOLD) {
+        // Confirm delete — slide fully off
+        div.style.transition = 'transform 0.25s ease';
+        div.style.transform = 'translateX(-100%)';
+        wrapper.style.transition = 'max-height 0.3s ease, opacity 0.3s ease';
+        wrapper.style.maxHeight = wrapper.offsetHeight + 'px';
+        setTimeout(() => {
+          wrapper.style.maxHeight = '0';
+          wrapper.style.opacity = '0';
+          wrapper.style.overflow = 'hidden';
+        }, 220);
+        setTimeout(() => deleteSlot(i, containerId, onClick), 500);
+      } else {
+        // Snap back
+        div.style.transition = 'transform 0.2s ease';
+        div.style.transform = 'translateX(0)';
+        deleteBg.style.opacity = '0';
+        // If barely moved, treat as a tap/click
+        if (Math.abs(dx) < 8) onClick(i, s);
+      }
+    }
+
+    // Touch
+    div.addEventListener('touchstart', e => { onStart(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    div.addEventListener('touchmove', e => { onMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    div.addEventListener('touchend', e => { onEnd(e.changedTouches[0].clientX); });
+
+    // Mouse (desktop fallback)
+    div.addEventListener('mousedown', e => { onStart(e.clientX, e.clientY); });
+    window.addEventListener('mousemove', e => { if (swiping) onMove(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', e => { if (swiping) onEnd(e.clientX); });
+
+    // Plain click (no swipe)
+    div.addEventListener('click', e => { if (Math.abs(currentX) < 8) onClick(i, s); });
+  });
+}
+
+function deleteSlot(i, containerId, onClick) {
+  const saves = getSaves();
+  saves[i] = {};
+  writeSaves(saves);
+  buildSaveUI(containerId, onClick);
+}
+
+function startNewGame() {
+  buildSaveUI('saveSlots', (i) => {
+    game.slot = i;
+    game.wave = 1; game.health = 120; game.stamina = 150; game.force = 100;
+    game.deaths = 0; game.stars = 0;
+    game.checkpointSet = false; game.checkpointWave = null;
+    saveGame();
+    showScreen('dialogueScreen');
+    startTempleDialogue();
+  });
+  showScreen('saveScreen');
+}
+
+function showLoadScreen() {
+  buildSaveUI('loadSlots', (i, s) => {
+    if (!s || !s.wave) return;
+    game.slot = i;
+    game.wave = s.wave;
+    game.stars = s.stars || 0;
+    game.deaths = s.deaths || 0;
+    game.checkpointSet = s.checkpointSet || false;
+    game.checkpointWave = s.checkpointWave || null;
+    game.health = 120; game.stamina = 150; game.force = 100;
+    beginWave(game.wave);
+  });
+  showScreen('loadScreen');
+}
+document.querySelector('.menu-btn:nth-child(2)').onclick = showLoadScreen;
+
+// ══════════════════════════════════════════════
+//  DIALOGUE SYSTEM
+// ══════════════════════════════════════════════
+let dialogueLines = [], dialogueIdx = 0, dialogueCallback = null;
+
+function runDialogue(lines, callback) {
+  dialogueLines = lines; dialogueIdx = 0; dialogueCallback = callback;
+  showDialogueLine();
+  showScreen('dialogueScreen');
+  document.getElementById('dialogueScreen').onclick = advanceDialogue;
+}
+
+function showDialogueLine() {
+  if (dialogueIdx >= dialogueLines.length) {
+    document.getElementById('dialogueScreen').onclick = null;
+    if (dialogueCallback) dialogueCallback();
+    return;
+  }
+  const line = dialogueLines[dialogueIdx];
+  document.getElementById('dialogueSpeaker').textContent = line.speaker;
+  document.getElementById('dialogueText').textContent = line.text;
+  document.getElementById('dialogueSpeaker').style.color = line.color || '#c9a84c';
+}
+
+function advanceDialogue() {
+  dialogueIdx++;
+  showDialogueLine();
+}
+
+// Temple NPC dialogue
+function startTempleDialogue() {
+  runDialogue([
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'Padawan. Before you venture beyond these walls, there is something you must understand about the conflict that awaits you.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'The Mandalorian Wars have torn this galaxy apart. But one wound runs deeper than any battlefield — a wound we created.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'Five years ago, a Jedi task force attempted to neutralize a Mandalorian weapons cache on the planet Varesh IV.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'The operation went catastrophically wrong. The chain reaction destroyed the planet entirely. One hundred and forty thousand lives. Gone.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'The Order... caused that?' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'Yes. We do not speak of it publicly. But someone survived — or rather, someone was off-world when it happened.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'His name was Aldric Voss. A simple cartographer. His wife, his daughter, his entire community — all on Varesh IV.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'He spent years in grief, then in rage. He sought out the dark side. He remade himself. He became Lord Velkris.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'He wants revenge on the Jedi.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'He wants us to feel what he felt. He has raised an army. He is coming here, to the Temple. To end us.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'I will not pretend the Order is without fault. But more death will not bring back Varesh IV. Stop him. And may the Force guide your heart as much as your blade.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'I understand, Master. I will face him.' },
+  ], () => { beginWave(1); });
+}
+
+// Velkris pre-fight dialogue
+function startVelkrisDialogue(callback) {
+  // Show Velkris sprite
+  showVelkrisSprite();
+  runDialogue([
+    { speaker: 'LORD VELKRIS', color:'#cc2200', text: 'So. They send a child to be their champion. How poetic. How insulting.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Velkris. This ends here. No more of your soldiers need to die for your vengeance.' },
+    { speaker: 'LORD VELKRIS', color:'#cc2200', text: 'Vengeance? You call it vengeance. They called it an accident. A miscalculation. A tragedy. Words. Empty words for one hundred and forty thousand graves.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'I know what happened on Varesh IV. I know what we did. And I am sorry.' },
+    { speaker: 'LORD VELKRIS', color:'#cc2200', text: '...' },
+    { speaker: 'LORD VELKRIS', color:'#cc2200', text: 'Do you know what my daughter\'s last word was? She called for me. I was on the other side of the galaxy, mapping star lanes. I felt her fear through the Force. Then nothing.' },
+    { speaker: 'LORD VELKRIS', color:'#cc2200', text: 'Your apology is ash. Everything I loved is ash. Now so shall be your Order.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Then we fight. But know this — I do not hate you, Velkris. I pity you. You became the monster that destroyed your own world\'s memory.' },
+    { speaker: 'LORD VELKRIS', color:'#cc2200', text: 'ENOUGH. Draw your blade, Jedi. Let us see which side of history survives today.' },
+  ], () => {
+    document.getElementById('dialogueScene').innerHTML = '';
+    if (callback) callback();
+  });
+}
+
+function showVelkrisSprite() {
+  const scene = document.getElementById('dialogueScene');
+  scene.innerHTML = `
+    <div style="position:relative;width:120px;height:160px;display:flex;align-items:flex-end;justify-content:center;">
+      <canvas id="velkrisCanvas" width="120" height="160" style="border:none;"></canvas>
+    </div>
+  `;
+  
+  const canvas = document.getElementById('velkrisCanvas');
+  const ctx = canvas.getContext('2d');
+  
+  function drawVelkrisSprite() {
+    ctx.clearRect(0, 0, 120, 160);
+    ctx.save();
+    ctx.translate(60, 80);
+    
+    // Cloak
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(-35, -50, 70, 100);
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(-38, -48, 76, 104);
+    
+    // Chest armor
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-25, -30, 50, 36);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(-20, -26, 40, 30);
+    
+    // Shoulders
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-32, -28, 10, 24);
+    ctx.fillRect(22, -28, 10, 24);
+    
+    // Hood
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.ellipse(0, -35, 28, 26, 0, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Mask
+    ctx.fillStyle = '#0a0000';
+    ctx.fillRect(-22, -42, 44, 28);
+    ctx.fillStyle = '#1a0000';
+    ctx.fillRect(-20, -40, 40, 24);
+    
+    // Eyes - with talking animation
+    const mouthOpen = Math.abs(Math.sin(Date.now() * 0.006)) > 0.3;
+    ctx.fillStyle = '#ff0000';
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.ellipse(-12, -32, 4, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(12, -32, 4, 6, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Mouth (red glow when talking)
+    if (mouthOpen) {
+      ctx.fillStyle = '#cc0000';
+      ctx.shadowColor = '#ff0000';
+      ctx.shadowBlur = 8;
+      ctx.fillRect(-6, -8, 12, 6);
+      ctx.shadowBlur = 0;
+    }
+    
+    // Right arm with saber
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(18, -25, 16, 38);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(20, -22, 12, 34);
+    
+    // Saber
+    ctx.save();
+    const swingT = Date.now() * 0.003;
+    const swingAngle = Math.sin(swingT) * 0.3 - 0.15;
+    ctx.translate(34, -15);
+    ctx.rotate(swingAngle);
+    
+    // Handle
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-3, 0, 6, 14);
+    
+    // Blade
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#ff2200';
+    ctx.fillRect(-2.5, -40, 5, 40);
+    ctx.fillStyle = 'rgba(255,50,0,0.3)';
+    ctx.fillRect(-5, -40, 10, 40);
+    ctx.shadowBlur = 0;
+    
+    ctx.restore();
+    ctx.restore();
+    
+    requestAnimationFrame(drawVelkrisSprite);
+  }
+  
+  drawVelkrisSprite();
+}
+
+// ══════════════════════════════════════════════
+//  CANVAS GAME ENGINE
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// Player
+const player = {
+  x: 0, y: 0, w: 36, h: 54,
+  vx: 0, vy: 0,
+  speed: 4.5, runSpeed: 7,
+  slashing: false, slashTimer: 0, slashAngle: 0,
+  facing: 1,
+  isRunning: false,
+  pullAnim: 0,
+  blocking: false,
+};
+
+// Enemies
+let enemies = [];
+let bullets = [];
+let particles = [];
+let waveActive = false;
+let waveCleared = false;
+
+const FLOOR_Y = () => H * 0.78;
+
+// Joystick state
+const joystick = { active: false, id: null, baseX:0, baseY:0, dx:0, dy:0 };
+
+function initPlayer() {
+  player.x = W / 2;
+  player.y = FLOOR_Y() - player.h;
+}
+
+// ── Enemy spawning ──
+function spawnWaveEnemies(waveNum) {
+  enemies = [];
+  bullets = [];
+  particles = [];
+  const cfg = WAVE_CONFIG[waveNum - 1];
+  for (let i = 0; i < cfg.enemies; i++) {
+    const side = i % 2 === 0 ? 1 : -1;
+    const ex = side === 1 ? W + 60 + i * 80 : -60 - i * 80;
+    enemies.push({
+      type: cfg.type, hp: cfg.hp, maxHp: cfg.hp, dmg: cfg.dmg,
+      x: ex, y: FLOOR_Y() - 48,
+      w: cfg.type === 'velkris' ? 52 : cfg.type === 'apprentice' ? 48 : 32,
+      h: cfg.type === 'velkris' ? 72 : cfg.type === 'apprentice' ? 64 : 48,
+      speed: cfg.type === 'trooper' ? 0.7 : cfg.type === 'acolyte' ? 1.8 : cfg.type === 'apprentice' ? 2 : 1.5,
+      shootTimer: Math.random() * 120,
+      shootInterval: cfg.type === 'trooper' ? 90 : cfg.type === 'acolyte' ? 70 : 80,
+      facing: side === 1 ? -1 : 1,
+      hitFlash: 0, dead: false,
+      attackAnim: 0,
+    });
+  }
+  waveActive = true; waveCleared = false;
+  
+  // Start Velkris music for final wave
+  if (waveNum === 6) {
+    startVelkrisMusicLoop();
+  }
+}
+
+// ── HUD update ──
+function updateHUD() {
+  document.getElementById('healthBar').style.width = Math.max(0,(game.health/120)*100) + '%';
+  document.getElementById('staminaBar').style.width = Math.max(0,(game.stamina/150)*100) + '%';
+  document.getElementById('forceBar').style.width = Math.max(0,game.force) + '%';
+  document.getElementById('waveDisplay').textContent = 'WAVE ' + game.wave;
+  const s = game.stars;
+  document.getElementById('starsDisplay').textContent = '★'.repeat(s) + '☆'.repeat(Math.max(0,3-s));
+}
+
+// ── Stamina / Force regen ──
+function scheduleStaminaRegen() {
+  clearTimeout(game.staminaTimer);
+  game.staminaTimer = setTimeout(() => {
+    const regen = setInterval(() => {
+      if (game.stamina >= 150) { game.stamina = 150; clearInterval(regen); return; }
+      game.stamina = Math.min(150, game.stamina + 0.5);
+    }, 50);
+  }, 2100);
+}
+function scheduleForceRegen() {
+  clearTimeout(game.forceTimer);
+  game.forceTimer = setTimeout(() => {
+    const regen = setInterval(() => {
+      if (game.force >= 100) { game.force = 100; clearInterval(regen); return; }
+      game.force = Math.min(100, game.force + 0.4);
+    }, 50);
+  }, 2100);
+}
+
+// ── Controls ──
+function startRun() { game.running = true; document.getElementById('runBtn').classList.add('active'); }
+function stopRun() { game.running = false; document.getElementById('runBtn').classList.remove('active'); }
+
+function startBlock() {
+  player.blocking = true;
+  document.getElementById('blockBtn').classList.add('active');
+}
+function stopBlock() {
+  player.blocking = false;
+  document.getElementById('blockBtn').classList.remove('active');
+}
+
+function doSlash() {
+  if (game.stamina < 8) return;
+  game.stamina = Math.max(0, game.stamina - 8);
+  scheduleStaminaRegen();
+  playSoundSlash();
+  player.slashing = true; player.slashTimer = 18;
+  player.slashAngle = player.facing === 1 ? -0.8 : 0.8;
+  document.getElementById('slashBtn').classList.add('active');
+  setTimeout(() => document.getElementById('slashBtn').classList.remove('active'), 200);
+  // Check hits
+  const reach = 70;
+  enemies.forEach(e => {
+    if (e.dead) return;
+    const dx = (e.x + e.w/2) - player.x;
+    if (Math.abs(dx) < reach && Math.abs((e.y+e.h/2)-(player.y+player.h/2)) < 60 && Math.sign(dx) === player.facing) {
+      const dmg = game.wave <= 3 ? PLAYER_DMG_EARLY : PLAYER_DMG_LATE;
+      e.hp -= dmg; e.hitFlash = 10;
+      playSoundHit();
+      spawnHitParticles(e.x + e.w/2, e.y + e.h/2, '#4488ff');
+      if (e.hp <= 0) killEnemy(e);
+    }
+  });
+}
+
+function doPull() {
+  if (game.pullCooldown || game.force < 15) return;
+  game.force = Math.max(0, game.force - 15);
+  game.pullCooldown = true;
+  scheduleForceRegen();
+  playSoundPull();
+  player.pullAnim = 20;
+  document.getElementById('pullBtn').classList.add('cooldown');
+  // Pull nearest enemy
+  let nearest = null, nearDist = Infinity;
+  enemies.forEach(e => {
+    if (e.dead) return;
+    const d = Math.abs(e.x - player.x);
+    if (d < nearDist) { nearDist = d; nearest = e; }
+  });
+  if (nearest) {
+    const dir = player.x > nearest.x ? 1 : -1;
+    nearest.x += dir * 120;
+    nearest.hp -= 5; nearest.hitFlash = 8;
+    playSoundHit();
+    spawnHitParticles(nearest.x, nearest.y + nearest.h/2, '#aa44ff');
+    if (nearest.hp <= 0) killEnemy(nearest);
+  }
+  // Cooldown 2.5s
+  clearTimeout(game.pullCooldownTimer);
+  game.pullCooldownTimer = setTimeout(() => {
+    game.pullCooldown = false;
+    document.getElementById('pullBtn').classList.remove('cooldown');
+  }, 2500);
+  let cd = 2500;
+  const cdInterval = setInterval(() => {
+    cd -= 100;
+    if (cd <= 0) { clearInterval(cdInterval); document.getElementById('pullCooldownDisplay').textContent = ''; return; }
+    document.getElementById('pullCooldownDisplay').textContent = `Pull: ${(cd/1000).toFixed(1)}s`;
+  }, 100);
+}
+
+function killEnemy(e) {
+  e.dead = true; e.hp = 0;
+  playSoundDeath();
+  spawnDeathParticles(e.x + e.w/2, e.y + e.h/2);
+}
+
+// ── Particles ──
+function spawnHitParticles(x, y, color) {
+  for (let i = 0; i < 6; i++) {
+    particles.push({ x, y, vx:(Math.random()-0.5)*5, vy:(Math.random()-0.5)*4-2, life:20, maxLife:20, color, size:3 });
+  }
+}
+function spawnDeathParticles(x, y) {
+  for (let i = 0; i < 14; i++) {
+    particles.push({ x, y, vx:(Math.random()-0.5)*7, vy:(Math.random()-0.5)*6-3, life:35, maxLife:35, color:'#ff4422', size:4+Math.random()*3 });
+  }
+}
+
+// ── Joystick setup ──
+const jZone = document.getElementById('joystickZone');
+const jKnob = document.getElementById('joystickKnob');
+const jBase = document.getElementById('joystickBase');
+
+jZone.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const t = e.changedTouches[0];
+  const r = jZone.getBoundingClientRect();
+  joystick.active = true; joystick.id = t.identifier;
+  joystick.baseX = r.left + r.width/2; joystick.baseY = r.top + r.height/2;
+}, { passive: false });
+
+jZone.addEventListener('touchmove', e => {
+  e.preventDefault();
+  for (const t of e.changedTouches) {
+    if (t.identifier === joystick.id) {
+      const dx = t.clientX - joystick.baseX;
+      const dy = t.clientY - joystick.baseY;
+      const dist = Math.min(Math.hypot(dx, dy), 45);
+      const angle = Math.atan2(dy, dx);
+      joystick.dx = Math.cos(angle) * (dist / 45);
+      joystick.dy = Math.sin(angle) * (dist / 45);
+      jKnob.style.transform = `translate(${Math.cos(angle)*dist*0.5}px,${Math.sin(angle)*dist*0.5}px)`;
+    }
+  }
+}, { passive: false });
+
+jZone.addEventListener('touchend', e => {
+  joystick.active = false; joystick.dx = 0; joystick.dy = 0;
+  jKnob.style.transform = 'translate(0,0)';
+});
+
+// Mouse joystick fallback
+let mouseJoystick = false;
+jZone.addEventListener('mousedown', e => {
+  mouseJoystick = true;
+  const r = jZone.getBoundingClientRect();
+  joystick.baseX = r.left + r.width/2; joystick.baseY = r.top + r.height/2;
+  joystick.active = true;
+});
+window.addEventListener('mousemove', e => {
+  if (!mouseJoystick) return;
+  const dx = e.clientX - joystick.baseX, dy = e.clientY - joystick.baseY;
+  const dist = Math.min(Math.hypot(dx,dy), 45);
+  const angle = Math.atan2(dy,dx);
+  joystick.dx = Math.cos(angle)*(dist/45); joystick.dy = Math.sin(angle)*(dist/45);
+  jKnob.style.transform = `translate(${Math.cos(angle)*dist*0.5}px,${Math.sin(angle)*dist*0.5}px)`;
+});
+window.addEventListener('mouseup', () => { mouseJoystick = false; joystick.active=false; joystick.dx=0; joystick.dy=0; jKnob.style.transform='translate(0,0)'; });
+
+// Keyboard fallback
+const keys = {};
+window.addEventListener('keydown', e => { keys[e.code] = true; if(e.code==='Space') doSlash(); if(e.code==='KeyF') doPull(); if(e.code==='ShiftLeft'||e.code==='ShiftRight') startRun(); if(e.code==='KeyB') startBlock(); if(e.code==='Escape'||e.code==='KeyP') { if(gamePaused) resumeGame(); else pauseGame(); } });
+window.addEventListener('keyup', e => { keys[e.code] = false; if(e.code==='ShiftLeft'||e.code==='ShiftRight') stopRun(); if(e.code==='KeyB') stopBlock(); });
+
+// ── DRAW functions ──
+function drawBackground() {
+  // Dark sky
+  const skyGrad = ctx.createLinearGradient(0,0,0,H*0.75);
+  skyGrad.addColorStop(0,'#02020a');
+  skyGrad.addColorStop(1,'#07071a');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0,0,W,H*0.75);
+
+  // Temple columns (background)
+  ctx.fillStyle = '#0e0e1e';
+  for (let i = 0; i < 7; i++) {
+    const cx = (i/(6)) * W * 1.1 - W*0.05;
+    ctx.fillRect(cx - 18, 0, 36, H*0.72);
+  }
+
+  // Floor
+  const floorGrad = ctx.createLinearGradient(0, H*0.75, 0, H);
+  floorGrad.addColorStop(0,'#12101e');
+  floorGrad.addColorStop(1,'#080810');
+  ctx.fillStyle = floorGrad;
+  ctx.fillRect(0, H*0.75, W, H*0.25);
+
+  // Floor line
+  ctx.strokeStyle = '#c9a84c33';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0,H*0.75); ctx.lineTo(W,H*0.75); ctx.stroke();
+
+  // Torches
+  drawTorch(W*0.15, H*0.55);
+  drawTorch(W*0.85, H*0.55);
+}
+
+function drawTorch(x, y) {
+  ctx.fillStyle = '#443322';
+  ctx.fillRect(x-4, y, 8, 30);
+  // Flame
+  const t = Date.now() * 0.005;
+  const flicker = Math.sin(t + x) * 4;
+  const grad = ctx.createRadialGradient(x, y-10+flicker, 2, x, y, 18);
+  grad.addColorStop(0,'rgba(255,200,50,0.9)');
+  grad.addColorStop(0.5,'rgba(255,80,0,0.5)');
+  grad.addColorStop(1,'rgba(255,0,0,0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.ellipse(x, y-8+flicker, 10, 18, 0, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawPlayer() {
+  const x = player.x, y = player.y;
+  const f = player.facing;
+  ctx.save();
+  ctx.translate(x, y + player.h/2);
+  ctx.scale(f, 1);
+
+  // Outer robe (flowing)
+  ctx.fillStyle = '#a89860';
+  ctx.fillRect(-12, -player.h/2+8, 24, player.h-8);
+  
+  // Inner tunic
+  ctx.fillStyle = '#c8b87a';
+  ctx.fillRect(-10, -player.h/2+10, 20, player.h-10);
+  
+  // Robe details/folds
+  ctx.fillStyle = '#b8a870';
+  ctx.fillRect(-9, -player.h/2+14, 4, player.h-16);
+  ctx.fillRect(5, -player.h/2+14, 4, player.h-16);
+
+  // Chest armor plate
+  ctx.fillStyle = '#8a7040';
+  ctx.fillRect(-7, -player.h/2+12, 14, 12);
+  ctx.fillStyle = '#6a5030';
+  ctx.fillRect(-6, -player.h/2+13, 12, 10);
+
+  // Hood/head
+  // Outer hood
+  ctx.fillStyle = '#a89860';
+  ctx.beginPath();
+  ctx.ellipse(0, -player.h/2+6, 15, 16, 0, 0, Math.PI*2);
+  ctx.fill();
+  
+  // Inner face area
+  ctx.fillStyle = '#d0a880';
+  ctx.beginPath();
+  ctx.ellipse(0, -player.h/2+8, 10, 12, 0, 0, Math.PI*2);
+  ctx.fill();
+  
+  // Face details (partially hidden by hood)
+  ctx.fillStyle = '#c89870';
+  ctx.fillRect(-6, -player.h/2+6, 12, 8);
+  // Eyes (in shadows of hood)
+  ctx.fillStyle = '#1a1a1a';
+  ctx.fillRect(-5, -player.h/2+7, 2.5, 2.5);
+  ctx.fillRect(2.5, -player.h/2+7, 2.5, 2.5);
+  // Slight glow to eyes
+  ctx.fillStyle = '#4488ff';
+  ctx.fillRect(-4.8, -player.h/2+7.2, 1.5, 1.5);
+  ctx.fillRect(3.2, -player.h/2+7.2, 1.5, 1.5);
+
+  // Belt with buckle
+  ctx.fillStyle = '#6a5030';
+  ctx.fillRect(-11, 4, 22, 5);
+  ctx.fillStyle = '#8a7040';
+  ctx.fillRect(-3, 3, 6, 7);
+  ctx.fillStyle = '#c9a84c';
+  ctx.fillRect(-1, 4, 2, 3);
+
+  // Arm guards (brown leather)
+  ctx.fillStyle = '#8a7040';
+  ctx.fillRect(-13, -player.h/2+16, 4, 18);
+  ctx.fillRect(9, -player.h/2+16, 4, 18);
+
+  // Lightsaber
+  const slashOffset = player.slashing ? Math.sin(player.slashTimer * 0.3) * 20 : 0;
+  const saberAngle = player.slashing ? -0.9 + (1 - player.slashTimer/18) * 1.8 : -0.3;
+  ctx.save();
+  ctx.translate(12, -10 + slashOffset);
+  ctx.rotate(saberAngle);
+  // Handle (detailed)
+  ctx.fillStyle = '#555';
+  ctx.fillRect(-3, 0, 6, 16);
+  ctx.fillStyle = '#777';
+  ctx.fillRect(-2.5, 2, 5, 12);
+  // Cross guard
+  ctx.fillStyle = '#444';
+  ctx.fillRect(-6, 4, 12, 3);
+  // Blade glow
+  ctx.shadowColor = '#4488ff';
+  ctx.shadowBlur = 20;
+  ctx.fillStyle = '#88ccff';
+  ctx.fillRect(-2.5, -50, 5, 50);
+  // Blade core
+  ctx.fillStyle = '#aaddff';
+  ctx.fillRect(-1.5, -50, 3, 50);
+  ctx.shadowBlur = 0;
+  ctx.restore();
+
+  ctx.restore();
+  if (player.slashTimer > 0) player.slashTimer--;
+  if (player.slashTimer <= 0) player.slashing = false;
+
+  // Pull anim
+  if (player.pullAnim > 0) {
+    ctx.save();
+    ctx.translate(x, y + player.h/2 - 20);
+    ctx.shadowColor = '#aa44ff'; ctx.shadowBlur = 30;
+    ctx.strokeStyle = `rgba(170,68,255,${player.pullAnim/20})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, (20 - player.pullAnim) * 5, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+    player.pullAnim--;
+  }
+
+  // Block shield anim — green energy barrier in front of player
+  if (player.blocking) {
+    const shieldX = x + player.facing * (player.w / 2 + 4);
+    const shieldY = y + player.h / 2;
+    const pulse = 0.6 + Math.sin(Date.now() * 0.012) * 0.2;
+    ctx.save();
+    ctx.translate(shieldX, shieldY);
+    // Outer glow
+    ctx.shadowColor = '#44ff88'; ctx.shadowBlur = 22;
+    ctx.strokeStyle = `rgba(68,255,136,${pulse * 0.9})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, -player.h * 0.38, 10, player.h * 0.44, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // Inner fill
+    ctx.fillStyle = `rgba(68,255,136,${pulse * 0.15})`;
+    ctx.beginPath();
+    ctx.ellipse(0, -player.h * 0.38, 10, player.h * 0.44, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+}
+
+function drawEnemy(e) {
+  if (e.dead) return;
+  ctx.save();
+  ctx.translate(e.x + e.w/2, e.y + e.h/2);
+  ctx.scale(e.facing, 1);
+
+  if (e.hitFlash > 0) { ctx.globalAlpha = 0.6; e.hitFlash--; }
+
+  if (e.type === 'veylix_apprentice') {
+    drawVeylixApprentice(e);
+  } else if (e.type === 'veylix') {
+    drawVeylixEnemy(e);
+  } else if (e.type === 'trooper') {
+    // Armor plating
+    ctx.fillStyle = '#c8c8c8';
+    ctx.fillRect(-e.w/2, -e.h/2, e.w, e.h);
+    // Chest plate
+    ctx.fillStyle = '#a8a8a8';
+    ctx.fillRect(-e.w/2+4, -e.h/2+8, e.w-8, 16);
+    // Helmet
+    ctx.fillStyle = '#e8e8e8';
+    ctx.beginPath();
+    ctx.ellipse(0, -e.h/2+6, 12, 10, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Visor — glowing blue
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-e.w/2+5, -e.h/2+2, e.w-10, 8);
+    ctx.shadowColor = '#0088ff'; ctx.shadowBlur = 8;
+    ctx.fillStyle = '#0088ff';
+    ctx.fillRect(-e.w/2+6, -e.h/2+3, e.w-12, 6);
+    ctx.shadowBlur = 0;
+    // Leg plates
+    ctx.fillStyle = '#888888';
+    ctx.fillRect(-e.w/2+3, e.h/2-12, 8, 12);
+    ctx.fillRect(e.w/2-11, e.h/2-12, 8, 12);
+    // Blaster rifle
+    ctx.fillStyle = '#333';
+    ctx.fillRect(e.w/2-3, -6, 18, 6);
+    ctx.fillStyle = '#666';
+    ctx.fillRect(e.w/2+12, -5, 4, 4);
+  } else if (e.type === 'acolyte') {
+    // Dark flowing robe
+    ctx.fillStyle = '#1a0808';
+    ctx.fillRect(-e.w/2-2, -e.h/2, e.w+4, e.h);
+    // Chest armor (red tinted)
+    ctx.fillStyle = '#440000';
+    ctx.beginPath();
+    ctx.moveTo(-e.w/2+2, -e.h/2+8);
+    ctx.lineTo(e.w/2-2, -e.h/2+8);
+    ctx.lineTo(e.w/2-4, -e.h/2+24);
+    ctx.lineTo(-e.w/2+4, -e.h/2+24);
+    ctx.fill();
+    // Chest decal
+    ctx.fillStyle = '#660000';
+    ctx.fillRect(-5, -e.h/2+12, 10, 8);
+    // Head/face
+    ctx.fillStyle = '#2a0808';
+    ctx.beginPath();
+    ctx.ellipse(0, -e.h/2+6, 10, 12, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Eyes (red)
+    ctx.fillStyle = '#ff2200';
+    ctx.fillRect(-5, -e.h/2+4, 3, 3);
+    ctx.fillRect(2, -e.h/2+4, 3, 3);
+    // Red saber with better blade
+    ctx.save();
+    const acolyteSwing = Math.sin(Date.now() * 0.002 + e.x) * 0.3;
+    ctx.translate(e.w/2, -e.h/2+4);
+    ctx.rotate(acolyteSwing - 0.2);
+    // Handle
+    ctx.fillStyle = '#333';
+    ctx.fillRect(-2, 0, 4, 12);
+    // Blade
+    ctx.shadowColor = '#cc0000'; ctx.shadowBlur = 18;
+    ctx.fillStyle = '#ff4422';
+    ctx.fillRect(-2, -40, 4, 40);
+    ctx.fillStyle = 'rgba(255,100,50,0.4)';
+    ctx.fillRect(-4, -40, 8, 40);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (e.type === 'apprentice') {
+    // Purple/dark robes
+    ctx.fillStyle = '#0a0015';
+    ctx.fillRect(-e.w/2-3, -e.h/2, e.w+6, e.h);
+    // Darker inner robe
+    ctx.fillStyle = '#1a0a2a';
+    ctx.fillRect(-e.w/2, -e.h/2, e.w, e.h);
+    // Purple chest armor
+    ctx.fillStyle = '#330055';
+    ctx.beginPath();
+    ctx.moveTo(-e.w/2+2, -e.h/2+10);
+    ctx.lineTo(e.w/2-2, -e.h/2+10);
+    ctx.lineTo(e.w/2-4, -e.h/2+28);
+    ctx.lineTo(-e.w/2+4, -e.h/2+28);
+    ctx.fill();
+    // Head with hood
+    ctx.fillStyle = '#0a000a';
+    ctx.beginPath();
+    ctx.ellipse(0, -e.h/2+8, 11, 13, 0, 0, Math.PI*2);
+    ctx.fill();
+    // Eyes (purple glow)
+    ctx.fillStyle = '#cc44ff';
+    ctx.shadowColor = '#aa00cc'; ctx.shadowBlur = 8;
+    ctx.fillRect(-5, -e.h/2+5, 3, 3);
+    ctx.fillRect(2, -e.h/2+5, 3, 3);
+    ctx.shadowBlur = 0;
+    // Purple saber — larger
+    ctx.save();
+    const apprenticeSwing = Math.sin(Date.now() * 0.0025 + e.x * 0.01) * 0.4;
+    ctx.translate(e.w/2, -e.h/2+6);
+    ctx.rotate(apprenticeSwing - 0.25);
+    // Handle
+    ctx.fillStyle = '#2a0a2a';
+    ctx.fillRect(-2.5, 0, 5, 14);
+    // Blade
+    ctx.shadowColor = '#aa00cc'; ctx.shadowBlur = 22;
+    ctx.fillStyle = '#cc44ff';
+    ctx.fillRect(-2.5, -50, 5, 50);
+    ctx.fillStyle = 'rgba(200,80,255,0.5)';
+    ctx.fillRect(-5, -50, 10, 50);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  } else if (e.type === 'velkris') {
+    // Billowing tattered cloak
+    const cloakWave = Math.sin(Date.now() * 0.002 + e.x * 0.01) * 3;
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(-e.w/2-8+cloakWave, -e.h/2-2, e.w+16, e.h+10);
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(-e.w/2-6, -e.h/2, e.w+12, e.h+6);
+    
+    // Tattered edges on cloak
+    ctx.fillStyle = '#000000';
+    const tatters = [
+      { x: -e.w/2-6, y: -e.h/2+20, h: 12 },
+      { x: -e.w/2-2, y: -e.h/2+35, h: 18 },
+      { x: e.w/2+2, y: -e.h/2+30, h: 16 },
+      { x: e.w/2+6, y: -e.h/2+25, h: 14 }
+    ];
+    tatters.forEach(t => {
+      ctx.fillRect(t.x, t.y, 3, t.h);
+      ctx.fillStyle = '#050505';
+      ctx.fillRect(t.x + 1, t.y + 2, 2, t.h - 4);
+      ctx.fillStyle = '#000000';
+    });
+    
+    // Chest armor (detailed)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-e.w/2+2, -e.h/2+18, e.w-4, 24);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(-e.w/2+4, -e.h/2+20, e.w-8, 20);
+    
+    // Shoulder pauldrons
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(-e.w/2-4, -e.h/2+16, 8, 20);
+    ctx.fillRect(e.w/2-4, -e.h/2+16, 8, 20);
+    
+    // Waist belt (metallic)
+    ctx.fillStyle = '#444';
+    ctx.fillRect(-e.w/2+2, -e.h/2+40, e.w-4, 4);
+    ctx.fillStyle = '#666';
+    ctx.fillRect(-e.w/2+3, -e.h/2+41, e.w-6, 2);
+    
+    // Hood
+    ctx.fillStyle = '#0a0a0a';
+    ctx.beginPath();
+    ctx.ellipse(0, -e.h/2+8, 22, 20, 0, 0, Math.PI*2);
+    ctx.fill();
+    
+    // Mask (damaged/cracked)
+    ctx.fillStyle = '#0a0000';
+    ctx.fillRect(-14, -e.h/2+2, 28, 22);
+    ctx.fillStyle = '#1a0000';
+    ctx.fillRect(-12, -e.h/2+4, 24, 18);
+    // Cracks in mask
+    ctx.strokeStyle = '#330000';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(-8, -e.h/2+6); ctx.lineTo(-4, -e.h/2+18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4, -e.h/2+6); ctx.lineTo(8, -e.h/2+18); ctx.stroke();
+    
+    // Red eyes (smaller, more intense)
+    ctx.fillStyle = '#ff0000';
+    ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 12;
+    ctx.beginPath();
+    ctx.ellipse(-8, -e.h/2+8, 2.5, 3.5, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(6, -e.h/2+8, 2.5, 3.5, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    
+    // Right arm (gauntlet)
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(e.w/2-12, -e.h/2+18, 14, 32);
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(e.w/2-10, -e.h/2+20, 10, 28);
+    
+    // Lightsaber — animated swing with impact
+    ctx.save();
+    const swingT = Date.now() * 0.003;
+    const swingAngle = Math.sin(swingT) * 0.35 - 0.2;
+    ctx.translate(e.w/2, -e.h/2+32);
+    ctx.rotate(swingAngle);
+    // Handle (ornate)
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(-4, 0, 8, 18);
+    ctx.fillStyle = '#444';
+    ctx.fillRect(-3.5, 2, 7, 14);
+    // Crossguard
+    ctx.fillStyle = '#1a0000';
+    ctx.fillRect(-10, 2, 20, 6);
+    // Blade glow (intense red)
+    ctx.shadowColor = '#ff0000';
+    ctx.shadowBlur = 28;
+    ctx.fillStyle = 'rgba(255,0,0,0.4)';
+    ctx.fillRect(-7, -68, 14, 68);
+    // Blade core
+    ctx.fillStyle = '#ff2200';
+    ctx.fillRect(-3, -68, 6, 68);
+    // Blade tip (bright)
+    ctx.fillStyle = '#ffaa00';
+    ctx.fillRect(-2, -70, 4, 4);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  // Health bar
+  const barW = e.w + 10;
+  const barX = e.x + e.w/2 - barW/2;
+  const barY = e.y - 12;
+  ctx.fillStyle = '#330000';
+  ctx.fillRect(barX, barY, barW, 5);
+  ctx.fillStyle = e.type === 'velkris' ? '#cc2200' : '#cc4400';
+  ctx.fillRect(barX, barY, barW * (e.hp / e.maxHp), 5);
+}
+
+function drawBullet(b) {
+  ctx.save();
+  ctx.shadowColor = '#ff4400'; ctx.shadowBlur = 10;
+  ctx.fillStyle = '#ff8844';
+  ctx.beginPath();
+  ctx.ellipse(b.x, b.y, 6, 3, b.angle, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawParticles() {
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life / p.maxLife;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+  });
+  ctx.globalAlpha = 1;
+}
+
+// ── GAME LOOP ──
+let lastTime = 0;
+let gamePaused = false;
+
+function pauseGame() {
+  if (!waveActive) return;
+  gamePaused = true;
+  const info = isSequel ? `SEQUEL — WAVE ${game.wave}` : `WAVE ${game.wave}`;
+  document.getElementById('pauseWaveInfo').textContent = info;
+  document.getElementById('pauseSavedMsg').textContent = '';
+  document.getElementById('pauseScreen').classList.add('active');
+  stopRun();
+}
+
+function resumeGame() {
+  gamePaused = false;
+  lastTime = 0; // reset so dt doesn't spike after unpause
+  document.getElementById('pauseScreen').classList.remove('active');
+}
+
+function pauseSaveGame() {
+  saveGame();
+  const msg = document.getElementById('pauseSavedMsg');
+  msg.textContent = '✓ SAVED';
+  setTimeout(() => { if (msg) msg.textContent = ''; }, 2000);
+}
+
+function pauseGoToMenu() {
+  saveGame();
+  gamePaused = false;
+  waveActive = false;
+  clearInterval(game.autoSaveTimer);
+  stopVelkrisMusic();
+  document.getElementById('pauseScreen').classList.remove('active');
+  isSequel = false;
+  showScreen('titleScreen');
+}
+
+function gameLoop(ts) {
+  if (document.getElementById('gameScreen').classList.contains('hidden')) { requestAnimationFrame(gameLoop); return; }
+  if (gamePaused) { lastTime = ts; requestAnimationFrame(gameLoop); return; }
+  const dt = Math.min(ts - lastTime, 50); lastTime = ts;
+  ctx.clearRect(0,0,W,H);
+  if (isSequel) drawSithBackground();
+  else drawBackground();
+  if (waveActive) {
+    updatePlayer();
+    updateEnemies(dt);
+    updateBullets();
+    updateParticles();
+    if (isSequel) checkSequelWaveCleared();
+    else checkWaveCleared();
+  }
+  drawParticles();
+  enemies.forEach(drawEnemy);
+  bullets.forEach(drawBullet);
+  drawPlayer();
+  if (settings.showHitboxes) drawHitboxes();
+  updateHUD();
+  requestAnimationFrame(gameLoop);
+}
+
+function drawHitboxes() {
+  ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+  ctx.lineWidth = 2;
+  // Player hitbox
+  ctx.strokeRect(player.x - player.w/2, player.y - player.h/2, player.w, player.h);
+  // Enemy hitboxes
+  enemies.forEach(e => {
+    if (!e.dead) {
+      ctx.strokeStyle = 'rgba(0, 255, 0, 0.5)';
+      ctx.strokeRect(e.x - e.w/2, e.y - e.h/2, e.w, e.h);
+    }
+  });
+  // Bullet hitboxes
+  bullets.forEach(b => {
+    ctx.strokeStyle = 'rgba(255, 255, 0, 0.5)';
+    ctx.fillStyle = 'rgba(255, 255, 0, 0.3)';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, 6, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.fill();
+  });
+}
+
+function updatePlayer() {
+  const spd = game.running ? player.runSpeed : player.speed;
+  if (game.running && (joystick.dx !== 0 || joystick.dy !== 0 || keys['ArrowLeft']||keys['ArrowRight']||keys['ArrowUp']||keys['ArrowDown']||keys['KeyA']||keys['KeyD']||keys['KeyW']||keys['KeyS'])) {
+    if (game.stamina > 0) { game.stamina = Math.max(0, game.stamina - 0.3); scheduleStaminaRegen(); }
+    else { game.running = false; stopRun(); }
+  }
+  let dx = joystick.dx || 0, dy = joystick.dy || 0;
+  if (keys['ArrowLeft']||keys['KeyA']) dx = -1;
+  if (keys['ArrowRight']||keys['KeyD']) dx = 1;
+  if (keys['ArrowUp']||keys['KeyW']) dy = -1;
+  if (keys['ArrowDown']||keys['KeyS']) dy = 1;
+  if (Math.abs(dx) > 0.1) player.facing = dx > 0 ? 1 : -1;
+  player.x += dx * spd;
+  player.y += dy * spd;
+  player.x = Math.max(player.w/2, Math.min(W - player.w/2, player.x));
+  player.y = Math.max(H * 0.10, Math.min(FLOOR_Y() - player.h * 0.3, player.y));
+}
+
+function updateEnemies(dt) {
+  enemies.forEach(e => {
+    if (e.dead) return;
+    // Move toward player
+    const dx = player.x - (e.x + e.w/2);
+    const dy = (player.y + player.h/2) - (e.y + e.h/2);
+    const dist = Math.hypot(dx, dy);
+    const stopDist = e.type === 'trooper' ? 220 : 80;
+    if (dist > stopDist) {
+      e.x += (dx/dist) * e.speed;
+      e.y += (dy/dist) * e.speed * 0.8;
+    }
+    e.facing = dx > 0 ? 1 : -1;
+    // Shoot / attack
+    e.shootTimer++;
+    if (e.shootTimer >= e.shootInterval) {
+      e.shootTimer = 0;
+      if (e.type === 'trooper') {
+        const angle = Math.atan2(dy, dx);
+        playSoundShoot();
+        bullets.push({ x: e.x+e.w/2, y: e.y+e.h/2, vx: Math.cos(angle)*5, vy: Math.sin(angle)*2.5, dmg: e.dmg, angle });
+      } else if (dist < 90) {
+        // Melee hit with lightsaber — blocked if player is blocking
+        playSoundLightsaberClash();
+        if (!player.blocking) {
+          game.health -= e.dmg;
+          spawnHitParticles(player.x, player.y + player.h/2, '#ff2200');
+          if (game.health <= 0) playerDied();
+        } else {
+          // Block sparks
+          spawnHitParticles(player.x, player.y + player.h/2, '#88ffaa');
+        }
+      }
+    }
+  });
+}
+
+function updateBullets() {
+  bullets.forEach(b => {
+    b.x += b.vx; b.y += b.vy;
+    // Check hit on player
+    if (Math.abs(b.x - player.x) < 20 && Math.abs(b.y - (player.y+player.h/2)) < 28) {
+      // Deflect if slashing
+      if (player.slashing) {
+        b.vx = -b.vx * 1.2; b.vy = -b.vy;
+        playSoundLightsaberClash();
+        spawnHitParticles(b.x, b.y, '#88bbff');
+        // Check deflect hits enemy
+        enemies.forEach(e => {
+          if (e.dead) return;
+          if (Math.abs(b.x - (e.x+e.w/2)) < 30 && Math.abs(b.y-(e.y+e.h/2)) < 40) {
+            const dmg = game.wave <= 3 ? PLAYER_DMG_EARLY : PLAYER_DMG_LATE;
+            e.hp -= dmg; e.hitFlash = 8;
+            playSoundBlasterHit();
+            if (e.hp <= 0) killEnemy(e);
+          }
+        });
+      } else if (player.blocking) {
+        // Block absorbs the shot — green sparks, bullet destroyed
+        playSoundLightsaberClash();
+        spawnHitParticles(b.x, b.y, '#88ffaa');
+        b.dead = true;
+      } else {
+        playSoundBlasterHit();
+        game.health = Math.max(0, game.health - b.dmg);
+        spawnHitParticles(player.x, player.y + player.h/2, '#ff2200');
+        b.dead = true;
+        if (game.health <= 0) playerDied();
+      }
+    }
+  });
+  bullets = bullets.filter(b => !b.dead && b.x > -50 && b.x < W+50 && b.y > -50 && b.y < H+50);
+}
+
+function updateParticles() {
+  particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.15; p.life--; });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function checkWaveCleared() {
+  if (!waveActive) return;
+  if (enemies.every(e => e.dead)) {
+    waveActive = false;
+    setTimeout(() => onWaveCleared(), 800);
+  }
+}
+
+function onWaveCleared() {
+  if (game.wave === 3) {
+    // Checkpoint after wave 3
+    showScreen('checkpointScreen');
+  } else if (game.wave === 4) {
+    // Checkpoint after wave 4 before apprentice
+    game.wave = 4;
+    saveGame();
+    showScreen('checkpointScreen');
+  } else if (game.wave === 6) {
+    playerWon();
+  } else {
+    game.wave++;
+    saveGame();
+    if (game.wave === 6) {
+      startVelkrisDialogue(() => { showWaveBanner('FINAL WAVE', () => { showScreen('gameScreen'); beginWaveRaw(6); }); });
+    } else {
+      showWaveBanner(`WAVE ${game.wave}`, () => { showScreen('gameScreen'); beginWaveRaw(game.wave); });
+    }
+  }
+}
+
+function confirmCheckpoint() {
+  game.checkpointSet = true;
+  game.health = 120;
+  const nextWave = (game.wave < 5) ? game.wave + 1 : 5;
+  game.checkpointWave = nextWave;
+  game.wave = nextWave;
+  saveGame();
+  showWaveBanner(`WAVE ${nextWave}`, () => { showScreen('gameScreen'); initPlayer(); spawnWaveEnemies(nextWave); startAutoSave(); });
+}
+
+function showWaveBanner(text, cb) {
+  showScreen('gameScreen');
+  playSoundWave();
+  const b = document.getElementById('waveBanner');
+  b.textContent = text; b.classList.add('show');
+  setTimeout(() => { b.classList.remove('show'); if(cb) cb(); }, 2200);
+}
+
+function beginWave(waveNum) {
+  game.wave = waveNum;
+  game.health = 120; game.stamina = 150; game.force = 100;
+  if (waveNum === 6) {
+    startVelkrisDialogue(() => { showWaveBanner('FINAL WAVE', () => { showScreen('gameScreen'); beginWaveRaw(6); }); });
+  } else {
+    showWaveBanner(`WAVE ${waveNum}`, () => { showScreen('gameScreen'); beginWaveRaw(waveNum); });
+  }
+}
+
+function beginWaveRaw(waveNum) {
+  initPlayer();
+  spawnWaveEnemies(waveNum);
+  startAutoSave();
+}
+
+function startAutoSave() {
+  clearInterval(game.autoSaveTimer);
+  game.autoSaveTimer = setInterval(() => { saveGame(); }, 30000);
+}
+
+function playerDied() {
+  if (game.health > 0) return; // already handled
+  waveActive = false;
+  game.deaths++;
+  clearInterval(game.autoSaveTimer);
+  stopVelkrisMusic();
+  playSoundGameOver();
+  document.getElementById('gameOverMsg').textContent = game.deaths > 1 ? 'The Force was not enough...' : 'You have been struck down...';
+  const respawnBtn = document.getElementById('respawnBtn');
+  if (game.checkpointSet) { respawnBtn.style.display = 'block'; }
+  else { respawnBtn.style.display = 'none'; }
+  showScreen('gameOverScreen');
+}
+
+function respawnFromCheckpoint() {
+  game.health = 120; game.stamina = 150; game.force = 100;
+  beginWave(game.checkpointWave);
+}
+
+function restartFromWave1() {
+  game.wave = 1; game.health = 120; game.stamina = 150; game.force = 100;
+  game.deaths = 0; game.stars = 0;
+  game.checkpointSet = false; game.checkpointWave = null;
+  saveGame();
+  if (isSequel) {
+    beginSequelWave(1);
+  } else {
+    beginWave(1);
+  }
+}
+
+function playerWon() {
+  clearInterval(game.autoSaveTimer);
+  stopVelkrisMusic();
+  const noDeaths = game.deaths === 0;
+  game.stars = noDeaths ? 3 : 1;
+  saveGame();
+  if (noDeaths) addNoDeathWin();
+  addTotalStars(game.stars);
+  playSoundVictory();
+  isSequel = false;
+  document.getElementById('victoryStars').textContent = '★'.repeat(game.stars) + '☆'.repeat(3-game.stars);
+  document.getElementById('victoryMsg').textContent = noDeaths
+    ? 'Flawless. You defeated Lord Velkris without falling. The Force honors your conviction.'
+    : 'Lord Velkris has been defeated. The Jedi Temple stands. The past cannot be undone — but the future is yours to protect.';
+  if (noDeaths && getNoDeathWins() >= 3) {
+    const banner = document.getElementById('sequelUnlockedBanner');
+    banner.classList.add('show');
+    setTimeout(() => banner.classList.remove('show'), 4000);
+  }
+  showScreen('victoryScreen');
+}
+
+// ══════════════════════════════════════════════
+//  SEQUEL SYSTEM
+// ══════════════════════════════════════════════
+const SEQUEL_WAVE_CONFIG = [
+  { enemies: 5,  type: 'trooper',   hp: 12,  dmg: 4  }, // sequel wave 1: 5 troopers
+  { enemies: 10, type: 'trooper',   hp: 12,  dmg: 4  }, // sequel wave 2: 10 troopers
+  { enemies: 4,  type: 'mixed',     hp: 0,   dmg: 0  }, // sequel wave 3: 2 troopers + 2 acolytes (mixed handled in spawn)
+  { enemies: 1,  type: 'veylix',    hp: 300, dmg: 18 }, // sequel wave 4: Lord Veylix (final)
+];
+
+let isSequel = false;
+
+// ══════════════════════════════════════════════
+//  CHEAT CODE SYSTEM
+// ══════════════════════════════════════════════
+function submitCheatCode() {
+  const input = document.getElementById('cheatInput');
+  const msg = document.getElementById('cheatMsg');
+  const code = (input.value || '').toString().trim();
+  if (code === '29001') {
+    localStorage.setItem(SEQUEL_UNLOCKED_KEY, '1');
+    updateTitleMenu();
+    msg.style.color = '#44dd00';
+    msg.textContent = '✓ SEQUEL UNLOCKED';
+    input.value = '';
+    const banner = document.getElementById('sequelUnlockedBanner');
+    banner.classList.add('show');
+    setTimeout(() => {
+      banner.classList.remove('show');
+      showScreen('titleScreen');
+    }, 2800);
+  } else {
+    msg.style.color = '#cc2200';
+    msg.textContent = '✗ INVALID CODE';
+    input.value = '';
+    setTimeout(() => { msg.textContent = ''; }, 1800);
+  }
+}
+
+// Allow Enter key to submit cheat code
+document.addEventListener('DOMContentLoaded', function() {
+  const cheatInput = document.getElementById('cheatInput');
+  if (cheatInput) {
+    cheatInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') submitCheatCode();
+    });
+  }
+});
+
+function updateTitleMenu() {
+  const btn = document.getElementById('sequelBtn');
+  const hint = document.getElementById('sequelHint');
+  if (!btn) return;
+  if (isSequelUnlocked()) {
+    btn.classList.add('unlocked');
+    hint.textContent = '';
+  } else {
+    btn.classList.remove('unlocked');
+    const wins = getNoDeathWins();
+    hint.textContent = `🔒 Win ${3 - wins} more time${3-wins===1?'':'s'} without dying to unlock`;
+  }
+}
+
+function tryStartSequel() {
+  if (!isSequelUnlocked()) return;
+  buildSaveUI('sequelSaveSlots', (i) => {
+    game.slot = i;
+    game.wave = 1; game.health = 120; game.stamina = 150; game.force = 100;
+    game.deaths = 0; game.stars = 0;
+    game.checkpointSet = false; game.checkpointWave = null;
+    isSequel = true;
+    saveGame();
+    showScreen('dialogueScreen');
+    startSequelDialogue();
+  }, true);
+  showScreen('sequelSaveScreen');
+}
+
+// Override buildSaveUI to support sequel (show all 6 slots)
+function buildSaveUI(containerId, onClick, showAll) {
+  const saves = getSaves();
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  const count = (showAll || isSequelUnlocked()) ? 6 : 4;
+  for (let i = 0; i < count; i++) {
+    const s = saves[i];
+    const isEmpty = !s || !s.wave;
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;overflow:hidden;border-radius:2px;';
+    const deleteBg = document.createElement('div');
+    deleteBg.style.cssText = 'position:absolute;inset:0;background:#220000;display:flex;align-items:center;justify-content:flex-end;padding-right:20px;color:#ff4422;font-size:13px;font-family:Cinzel,serif;';
+    deleteBg.textContent = isEmpty ? '' : '🗑  DELETE';
+    const div = document.createElement('div');
+    div.className = 'save-slot';
+    div.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative;transition:transform 0.2s ease;will-change:transform;background:#fdf9e8;padding:16px 20px;border:1px solid #c9a84c55;';
+    const slotTag = i >= 4 ? ' <span style="color:#cc2200;font-size:10px;">[SEQUEL SLOT]</span>' : '';
+    div.innerHTML = `<div style="flex:1;font-family:Cinzel,serif;color:#2a2000;font-size:clamp(12px,2.5vw,16px);">Slot ${i+1}${slotTag}: ${slotLabel(s)}</div><div style="min-width:52px;text-align:right;color:#a07820;">${slotStars(s)}</div>`;
+    wrapper.appendChild(deleteBg);
+    wrapper.appendChild(div);
+    el.appendChild(wrapper);
+    let startX=0,startY=0,currentX=0,swiping=false;
+    function onStart(x,y){if(isEmpty)return;startX=x;startY=y;currentX=0;swiping=true;div.style.transition='none';}
+    function onMove(x,y){if(!swiping)return;const dx=x-startX,dy=y-startY;if(Math.abs(dy)>Math.abs(dx)+10){swiping=false;return;}if(dx>0)return;currentX=Math.max(dx,-160);div.style.transform=`translateX(${currentX}px)`;deleteBg.style.opacity=Math.min(1,Math.abs(currentX)/80);}
+    function onEnd(x){if(!swiping)return;swiping=false;const dx=x-startX;if(dx<-80){div.style.transition='transform 0.25s ease';div.style.transform='translateX(-100%)';wrapper.style.transition='max-height 0.3s ease,opacity 0.3s ease';wrapper.style.maxHeight=wrapper.offsetHeight+'px';setTimeout(()=>{wrapper.style.maxHeight='0';wrapper.style.opacity='0';},220);setTimeout(()=>deleteSlot(i,containerId,onClick,showAll),500);}else{div.style.transition='transform 0.2s ease';div.style.transform='translateX(0)';deleteBg.style.opacity='0';if(Math.abs(dx)<8)onClick(i,s);}}
+    div.addEventListener('touchstart',e=>onStart(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+    div.addEventListener('touchmove',e=>onMove(e.touches[0].clientX,e.touches[0].clientY),{passive:true});
+    div.addEventListener('touchend',e=>onEnd(e.changedTouches[0].clientX));
+    div.addEventListener('mousedown',e=>onStart(e.clientX,e.clientY));
+    window.addEventListener('mousemove',e=>{if(swiping)onMove(e.clientX,e.clientY);});
+    window.addEventListener('mouseup',e=>{if(swiping)onEnd(e.clientX);});
+    div.addEventListener('click',e=>{if(Math.abs(currentX)<8)onClick(i,s);});
+  }
+}
+
+function deleteSlot(i, containerId, onClick, showAll) {
+  const saves = getSaves();
+  saves[i] = {};
+  writeSaves(saves);
+  buildSaveUI(containerId, onClick, showAll);
+}
+
+// ── Sequel Dialogue ──
+function startSequelDialogue() {
+  runDialogue([
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'You survived. You returned. I... I owe you the truth.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Master Solan. What is it? You look as though you have carried something heavy for a very long time.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'Months have passed since you defeated Lord Velkris. The Temple breathes easier. But I cannot.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'I told you Velkris was the threat. That was... not a lie. But it was not the whole truth.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'What do you mean it wasn\'t the whole truth?' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'Velkris did not fall to the dark side alone. He was shaped. Guided. Weaponized. By someone far older and far more dangerous.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'There\'s someone else.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'His name is Lord Veylix. A Sith master who has lived in the shadows for decades. He found Velkris in his grief and moulded him into a blade aimed at us.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'You knew this. When you sent me to fight Velkris — you already knew.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'I... yes. Forgive me. I believed that if Velkris fell, Veylix would retreat. That his plan would collapse. I was wrong.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'You sent me against one enemy while the real one watched from the dark.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'I am so deeply sorry. I thought I was protecting you. I thought I was protecting the Order. I was afraid of what the truth would cost.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Where is Veylix now?' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'His Sith chambers. Deep beneath the old ruins. He has been waiting — watching — since Velkris fell. He knows you are coming. He has always known.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Then I will not keep him waiting. And Master — when this is over, we will talk about what it means to trust.' },
+    { speaker: 'JEDI MASTER SOLAN', color:'#c9a84c', text: 'May the Force be with you, my Padawan. I pray it is enough.' },
+  ], () => { beginSequelWave(1); });
+}
+
+function startVeylixDialogue(callback) {
+  showVeylixSprite();
+  runDialogue([
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: 'You killed my student. I felt it. Like a candle being snuffed out in a storm.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Velkris was your weapon. You took a broken man\'s grief and turned it into a sword pointed at innocent people.' },
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: 'Grief is the most honest thing in the universe. I merely... refined it. Gave it purpose.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'You gave it a target and called it purpose. That\'s not power. That\'s cowardice.' },
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: 'Ha. The child has teeth. Good. I would hate for this to be boring.' },
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: 'I have watched the Jedi for forty years. I have seen your arrogance destroy worlds and call it justice. Varesh IV was not the first. It will not be the last.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'So you\'ve appointed yourself the galaxy\'s executioner.' },
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: 'I have appointed myself its correction. The Jedi Order is a disease. I am the cure.' },
+    { speaker: 'YOU', color:'#88bbff', text: 'Velkris said something like that too. In the end he was just a man in pain who never healed. What\'s your excuse, Veylix?' },
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: '...' },
+    { speaker: 'LORD VEYLIX', color:'#ff4422', text: 'I stopped needing excuses long ago. Draw your blade, child. Let the dark side show you what forty years of patience looks like.' },
+  ], () => {
+    document.getElementById('dialogueScene').innerHTML = '';
+    if (callback) callback();
+  });
+}
+
+function showVeylixSprite() {
+  const scene = document.getElementById('dialogueScene');
+  scene.innerHTML = `<div style="position:relative;width:130px;height:170px;display:flex;align-items:flex-end;justify-content:center;"><canvas id="veylixCanvas" width="130" height="170"></canvas></div>`;
+  const c = document.getElementById('veylixCanvas');
+  const cx = c.getContext('2d');
+  function drawVeylix() {
+    cx.clearRect(0,0,130,170);
+    cx.save();
+    cx.translate(65,85);
+    // Massive shoulders
+    cx.fillStyle='#0a0a0a';
+    cx.fillRect(-52,-40,104,100);
+    cx.fillStyle='#111';
+    cx.fillRect(-48,-36,96,94);
+    // Shoulder pauldrons (huge)
+    cx.fillStyle='#050505';
+    cx.beginPath();cx.ellipse(-42,-20,18,28,0.3,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.ellipse(42,-20,18,28,-0.3,0,Math.PI*2);cx.fill();
+    // Silver rune engravings on chest
+    cx.strokeStyle='#555';cx.lineWidth=1;
+    cx.beginPath();cx.moveTo(-20,-30);cx.lineTo(20,-30);cx.stroke();
+    cx.beginPath();cx.moveTo(-15,-20);cx.lineTo(15,-20);cx.stroke();
+    cx.strokeStyle='#444';
+    cx.beginPath();cx.moveTo(-10,-10);cx.lineTo(10,-10);cx.stroke();
+    cx.beginPath();cx.moveTo(0,-35);cx.lineTo(0,5);cx.stroke();
+    // Diamond rune center
+    cx.beginPath();cx.moveTo(0,-28);cx.lineTo(6,-22);cx.lineTo(0,-16);cx.lineTo(-6,-22);cx.closePath();
+    cx.strokeStyle='#666';cx.stroke();
+    // Hood
+    cx.fillStyle='#080808';
+    cx.beginPath();cx.ellipse(0,-50,26,28,0,0,Math.PI*2);cx.fill();
+    // Horns
+    cx.fillStyle='#0a0a0a';
+    cx.beginPath();cx.moveTo(-16,-64);cx.lineTo(-8,-42);cx.lineTo(-22,-42);cx.closePath();cx.fill();
+    cx.beginPath();cx.moveTo(16,-64);cx.lineTo(8,-42);cx.lineTo(22,-42);cx.closePath();cx.fill();
+    // Horn outlines (white)
+    cx.strokeStyle='#ddd';cx.lineWidth=1.5;
+    cx.beginPath();cx.moveTo(-16,-64);cx.lineTo(-8,-42);cx.lineTo(-22,-42);cx.closePath();cx.stroke();
+    cx.beginPath();cx.moveTo(16,-64);cx.lineTo(8,-42);cx.lineTo(22,-42);cx.closePath();cx.stroke();
+    // Skull face mask
+    cx.fillStyle='#050505';
+    cx.fillRect(-18,-60,36,26);
+    // Glowing white eyes
+    cx.fillStyle='#ffffff';
+    cx.shadowColor='#ffffff';cx.shadowBlur=12;
+    cx.beginPath();cx.ellipse(-9,-52,5,7,-0.2,0,Math.PI*2);cx.fill();
+    cx.beginPath();cx.ellipse(9,-52,5,7,0.2,0,Math.PI*2);cx.fill();
+    // Eye pupils (dark slits)
+    cx.fillStyle='#000';cx.shadowBlur=0;
+    cx.fillRect(-10.5,-54,3,8);
+    cx.fillRect(7.5,-54,3,8);
+    // Skull grin (animated teeth)
+    const talking = Math.abs(Math.sin(Date.now()*0.006))>0.35;
+    cx.fillStyle='#111';
+    cx.fillRect(-14,-40,28,talking?10:6);
+    cx.fillStyle='#ffffff';
+    cx.shadowColor='#ffffff';cx.shadowBlur=4;
+    const teethGap = talking ? 8 : 5;
+    for(let t=-12;t<14;t+=5){cx.fillRect(t,-40,3.5,teethGap);}
+    cx.shadowBlur=0;
+    // Arms
+    cx.fillStyle='#0a0a0a';
+    cx.fillRect(-50,20,18,50);cx.fillRect(32,20,18,50);
+    // Silver chain leg details
+    cx.strokeStyle='#333';cx.lineWidth=1;
+    cx.beginPath();cx.moveTo(-20,10);cx.lineTo(-20,70);cx.stroke();
+    cx.beginPath();cx.moveTo(20,10);cx.lineTo(20,70);cx.stroke();
+    // Dual sabers — REPLACE with single white saber
+    cx.save();
+    const sw=Math.sin(Date.now()*0.003)*0.4-0.2;
+    cx.translate(44,28);cx.rotate(-sw-0.2);
+    cx.fillStyle='#1a1a1a';cx.fillRect(-3,0,6,16);
+    cx.fillStyle='#333';cx.fillRect(-6,2,12,5);
+    // White blade
+    cx.shadowColor='#ffffff';cx.shadowBlur=30;
+    cx.fillStyle='rgba(200,230,255,0.35)';cx.fillRect(-6,-52,12,52);
+    cx.shadowBlur=18;
+    cx.fillStyle='rgba(180,220,255,0.6)';cx.fillRect(-3.5,-52,7,52);
+    cx.fillStyle='#e8f4ff';cx.fillRect(-2,-52,4,52);
+    cx.fillStyle='#ffffff';cx.fillRect(-1,-52,2,52);
+    cx.shadowBlur=0;cx.restore();
+    cx.restore();
+    requestAnimationFrame(drawVeylix);
+  }
+  drawVeylix();
+}
+
+// ── Sequel wave management ──
+function beginSequelWave(waveNum) {
+  game.wave = waveNum;
+  game.health = 120; game.stamina = 150; game.force = 100;
+  if (waveNum === 4) {
+    // Final wave — Veylix dialogue then fight
+    startVeylixDialogue(() => {
+      showWaveBanner('FINAL CONFRONTATION', () => {
+        showScreen('gameScreen');
+        spawnSequelEnemies(4);
+        startAutoSave();
+      });
+    });
+  } else {
+    showWaveBanner(`SEQUEL WAVE ${waveNum}`, () => {
+      showScreen('gameScreen');
+      spawnSequelEnemies(waveNum);
+      startAutoSave();
+    });
+  }
+}
+
+function spawnSequelEnemies(waveNum) {
+  enemies = []; bullets = []; particles = [];
+  initPlayer();
+
+  if (waveNum === 3) {
+    // Wave 3: 2 troopers + 2 acolytes
+    const mixed = [
+      { type:'trooper', hp:12, maxHp:12, dmg:4, w:32, h:48, speed:0.7, shootInterval:90 },
+      { type:'acolyte', hp:35, maxHp:35, dmg:10, w:32, h:48, speed:1.8, shootInterval:70 },
+      { type:'trooper', hp:12, maxHp:12, dmg:4, w:32, h:48, speed:0.7, shootInterval:90 },
+      { type:'acolyte', hp:35, maxHp:35, dmg:10, w:32, h:48, speed:1.8, shootInterval:70 },
+    ];
+    mixed.forEach((cfg, i) => {
+      const side = i % 2 === 0 ? 1 : -1;
+      const ex = side === 1 ? W+60+i*80 : -60-i*80;
+      enemies.push({
+        ...cfg,
+        x: ex, y: FLOOR_Y()-48,
+        shootTimer: Math.random()*120,
+        facing: side===1?-1:1, hitFlash:0, dead:false, attackAnim:0,
+      });
+    });
+  } else if (waveNum === 4) {
+    // Wave 4: Lord Veylix solo
+    enemies.push({
+      type:'veylix', hp:300, maxHp:300, dmg:18,
+      x: W+80, y: FLOOR_Y()-72,
+      w:60, h:80, speed:1.6,
+      shootTimer:0, shootInterval:75,
+      facing:-1, hitFlash:0, dead:false, attackAnim:0,
+    });
+    startVelkrisMusicLoop();
+  } else {
+    // Waves 1 & 2: all troopers
+    const cfg = SEQUEL_WAVE_CONFIG[waveNum-1];
+    for (let i = 0; i < cfg.enemies; i++) {
+      const side = i % 2 === 0 ? 1 : -1;
+      const ex = side === 1 ? W+60+i*60 : -60-i*60;
+      enemies.push({
+        type: cfg.type, hp: cfg.hp, maxHp: cfg.hp, dmg: cfg.dmg,
+        x: ex, y: FLOOR_Y()-48,
+        w:32, h:48, speed:0.7,
+        shootTimer: Math.random()*120,
+        shootInterval: 90,
+        facing: side===1?-1:1, hitFlash:0, dead:false, attackAnim:0,
+      });
+    }
+  }
+  waveActive = true; waveCleared = false;
+}
+
+function checkSequelWaveCleared() {
+  if (!waveActive) return;
+  if (enemies.every(e => e.dead)) {
+    waveActive = false;
+    setTimeout(() => {
+      if (game.wave === 4) {
+        sequelWon();
+      } else {
+        game.wave++;
+        saveGame();
+        beginSequelWave(game.wave);
+      }
+    }, 800);
+  }
+}
+
+function sequelWon() {
+  clearInterval(game.autoSaveTimer);
+  stopVelkrisMusic();
+  const noDeaths = game.deaths === 0;
+  game.stars = noDeaths ? 10 : 1;
+  saveGame();
+  if (noDeaths) addNoDeathWin();
+  addTotalStars(game.stars);
+  playSoundVictory();
+  document.getElementById('sequelVictoryStars').textContent = noDeaths ? '★★★★★★★★★★' : '★☆☆☆☆☆☆☆☆☆';
+  document.getElementById('sequelVictoryMsg').textContent = noDeaths
+    ? 'Flawless. Lord Veylix and his shadow are extinguished. The Force shines through you like a star.'
+    : 'Lord Veylix has fallen. The Sith chambers are silent. The galaxy can breathe again... for now.';
+  showScreen('sequelVictoryScreen');
+}
+
+// ── Draw Sith Chamber Background ──
+function drawSithBackground() {
+  // Black oppressive sky
+  const skyGrad = ctx.createLinearGradient(0,0,0,H*0.75);
+  skyGrad.addColorStop(0,'#000000');
+  skyGrad.addColorStop(1,'#050005');
+  ctx.fillStyle=skyGrad;
+  ctx.fillRect(0,0,W,H*0.75);
+  // Dark stone columns with cracks
+  ctx.fillStyle='#080808';
+  for(let i=0;i<7;i++){
+    const cx=i/6*W*1.1-W*0.05;
+    ctx.fillRect(cx-20,0,40,H*0.72);
+    // crack lines
+    ctx.strokeStyle='#111';ctx.lineWidth=1;
+    ctx.beginPath();ctx.moveTo(cx-5,H*0.1);ctx.lineTo(cx+3,H*0.3);ctx.lineTo(cx-2,H*0.5);ctx.stroke();
+  }
+  // Sith runes on walls
+  ctx.strokeStyle='#1a0000';ctx.lineWidth=1.5;
+  for(let i=0;i<5;i++){
+    const rx=i/4*W*0.8+W*0.1;
+    ctx.beginPath();ctx.moveTo(rx,H*0.05);ctx.lineTo(rx+10,H*0.15);ctx.lineTo(rx,H*0.25);ctx.lineTo(rx-10,H*0.15);ctx.closePath();ctx.stroke();
+  }
+  // Floor (dark stone)
+  const floorGrad=ctx.createLinearGradient(0,H*0.75,0,H);
+  floorGrad.addColorStop(0,'#0a0005');
+  floorGrad.addColorStop(1,'#000000');
+  ctx.fillStyle=floorGrad;
+  ctx.fillRect(0,H*0.75,W,H*0.25);
+  // Floor cracks
+  ctx.strokeStyle='#1a0000';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H*0.75);ctx.lineTo(W,H*0.75);ctx.stroke();
+  // Red torches
+  drawRedTorch(W*0.1,H*0.5);
+  drawRedTorch(W*0.9,H*0.5);
+  drawRedTorch(W*0.35,H*0.45);
+  drawRedTorch(W*0.65,H*0.45);
+}
+
+function drawRedTorch(x,y){
+  ctx.fillStyle='#222';
+  ctx.fillRect(x-4,y,8,30);
+  const t=Date.now()*0.005;
+  const flicker=Math.sin(t+x)*4;
+  const g=ctx.createRadialGradient(x,y-10+flicker,2,x,y,16);
+  g.addColorStop(0,'rgba(255,50,0,0.9)');
+  g.addColorStop(0.5,'rgba(180,0,0,0.5)');
+  g.addColorStop(1,'rgba(100,0,0,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.ellipse(x,y-8+flicker,8,16,0,0,Math.PI*2);ctx.fill();
+}
+
+// ── Draw Veylix Apprentice ──
+function drawVeylixApprentice(e) {
+  // Full black armored robe
+  ctx.fillStyle='#050505';
+  ctx.fillRect(-e.w/2-4,-e.h/2,e.w+8,e.h+4);
+  ctx.fillStyle='#0a0a0a';
+  ctx.fillRect(-e.w/2,-e.h/2,e.w,e.h);
+  // Chest plate with silver etchings
+  ctx.fillStyle='#111';
+  ctx.fillRect(-e.w/2+2,-e.h/2+12,e.w-4,22);
+  ctx.strokeStyle='#444';ctx.lineWidth=1;
+  ctx.strokeRect(-e.w/2+4,-e.h/2+14,e.w-8,18);
+  ctx.beginPath();ctx.moveTo(0,-e.h/2+14);ctx.lineTo(0,-e.h/2+32);ctx.stroke();
+  // Shoulder plates
+  ctx.fillStyle='#0a0a0a';
+  ctx.fillRect(-e.w/2-6,-e.h/2+10,8,16);
+  ctx.fillRect(e.w/2-2,-e.h/2+10,8,16);
+  // Head with small horns
+  ctx.fillStyle='#080808';
+  ctx.beginPath();ctx.ellipse(0,-e.h/2+8,13,14,0,0,Math.PI*2);ctx.fill();
+  // Mini horns
+  ctx.fillStyle='#0a0a0a';
+  ctx.strokeStyle='#bbb';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(-8,-e.h/2-2);ctx.lineTo(-4,-e.h/2+6);ctx.lineTo(-12,-e.h/2+6);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.beginPath();ctx.moveTo(8,-e.h/2-2);ctx.lineTo(4,-e.h/2+6);ctx.lineTo(12,-e.h/2+6);ctx.closePath();ctx.fill();ctx.stroke();
+  // White glowing eyes (smaller than Veylix)
+  ctx.fillStyle='#ffffff';ctx.shadowColor='#fff';ctx.shadowBlur=8;
+  ctx.beginPath();ctx.ellipse(-6,-e.h/2+6,3,4,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(6,-e.h/2+6,3,4,0,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
+  // Grin
+  ctx.fillStyle='#111';
+  ctx.fillRect(-8,-e.h/2+12,16,5);
+  ctx.fillStyle='#fff';ctx.shadowColor='#fff';ctx.shadowBlur=4;
+  for(let t=-7;t<8;t+=4){ctx.fillRect(t,-e.h/2+12,2.5,4);}
+  ctx.shadowBlur=0;
+  // Dual red sabers
+  ctx.save();
+  const s1=Math.sin(Date.now()*0.003)*0.35;
+  ctx.translate(-e.w/2+2,-e.h/2+18);ctx.rotate(s1-0.2);
+  ctx.fillStyle='#222';ctx.fillRect(-2,0,4,12);
+  ctx.shadowColor='#ff0000';ctx.shadowBlur=18;
+  ctx.fillStyle='#ff2200';ctx.fillRect(-2,-44,4,44);
+  ctx.shadowBlur=0;ctx.restore();
+  ctx.save();
+  const s2=Math.sin(Date.now()*0.003+1)*0.35;
+  ctx.translate(e.w/2-2,-e.h/2+18);ctx.rotate(-s2+0.2);
+  ctx.fillStyle='#222';ctx.fillRect(-2,0,4,12);
+  ctx.shadowColor='#ff0000';ctx.shadowBlur=18;
+  ctx.fillStyle='#ff2200';ctx.fillRect(-2,-44,4,44);
+  ctx.shadowBlur=0;ctx.restore();
+}
+
+// ── Draw Lord Veylix (detailed, 1 white saber) ──
+function drawVeylixEnemy(e) {
+  const t = Date.now();
+  const cloakWave = Math.sin(t*0.0018)*4;
+
+  // ── OUTER CLOAK (massive, billowing) ──
+  ctx.fillStyle='#000';
+  ctx.beginPath();
+  ctx.moveTo(-e.w/2-14+cloakWave, -e.h/2-6);
+  ctx.lineTo(e.w/2+14-cloakWave, -e.h/2-6);
+  ctx.lineTo(e.w/2+18, e.h/2+8);
+  ctx.lineTo(-e.w/2-18, e.h/2+8);
+  ctx.closePath();
+  ctx.fill();
+
+  // Inner cloak body
+  ctx.fillStyle='#050505';
+  ctx.fillRect(-e.w/2-6,-e.h/2+2,e.w+12,e.h+4);
+
+  // ── MASSIVE SHOULDER PAULDRONS (key feature from image) ──
+  // Left pauldron — huge boxy plate
+  ctx.fillStyle='#0a0a0a';
+  ctx.beginPath();
+  ctx.moveTo(-e.w/2-20,-e.h/2+12);
+  ctx.lineTo(-e.w/2-4,-e.h/2+8);
+  ctx.lineTo(-e.w/2-2,-e.h/2+38);
+  ctx.lineTo(-e.w/2-22,-e.h/2+42);
+  ctx.closePath();
+  ctx.fill();
+  // Left pauldron shine
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();
+  ctx.moveTo(-e.w/2-18,-e.h/2+14);
+  ctx.lineTo(-e.w/2-6,-e.h/2+10);
+  ctx.lineTo(-e.w/2-4,-e.h/2+26);
+  ctx.lineTo(-e.w/2-18,-e.h/2+28);
+  ctx.closePath();
+  ctx.fill();
+  // Left pauldron etching lines
+  ctx.strokeStyle='#2a2a2a'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(-e.w/2-16,-e.h/2+18);ctx.lineTo(-e.w/2-6,-e.h/2+16);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-e.w/2-16,-e.h/2+24);ctx.lineTo(-e.w/2-6,-e.h/2+22);ctx.stroke();
+
+  // Right pauldron
+  ctx.fillStyle='#0a0a0a';
+  ctx.beginPath();
+  ctx.moveTo(e.w/2+20,-e.h/2+12);
+  ctx.lineTo(e.w/2+4,-e.h/2+8);
+  ctx.lineTo(e.w/2+2,-e.h/2+38);
+  ctx.lineTo(e.w/2+22,-e.h/2+42);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#1a1a1a';
+  ctx.beginPath();
+  ctx.moveTo(e.w/2+18,-e.h/2+14);
+  ctx.lineTo(e.w/2+6,-e.h/2+10);
+  ctx.lineTo(e.w/2+4,-e.h/2+26);
+  ctx.lineTo(e.w/2+18,-e.h/2+28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#2a2a2a';
+  ctx.beginPath();ctx.moveTo(e.w/2+16,-e.h/2+18);ctx.lineTo(e.w/2+6,-e.h/2+16);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(e.w/2+16,-e.h/2+24);ctx.lineTo(e.w/2+6,-e.h/2+22);ctx.stroke();
+
+  // ── CHEST ARMOR (elaborate engravings like image) ──
+  ctx.fillStyle='#0d0d0d';
+  ctx.fillRect(-e.w/2+2,-e.h/2+10,e.w-4,36);
+  ctx.fillStyle='#141414';
+  ctx.fillRect(-e.w/2+4,-e.h/2+12,e.w-8,32);
+
+  // Vertical center line
+  ctx.strokeStyle='#333'; ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,-e.h/2+10);ctx.lineTo(0,-e.h/2+46);ctx.stroke();
+
+  // Horizontal lines
+  ctx.lineWidth=1;
+  ctx.strokeStyle='#2a2a2a';
+  ctx.beginPath();ctx.moveTo(-e.w/2+6,-e.h/2+18);ctx.lineTo(e.w/2-6,-e.h/2+18);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-e.w/2+6,-e.h/2+26);ctx.lineTo(e.w/2-6,-e.h/2+26);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-e.w/2+6,-e.h/2+34);ctx.lineTo(e.w/2-6,-e.h/2+34);ctx.stroke();
+
+  // Diamond rune (center chest)
+  ctx.strokeStyle='#444'; ctx.lineWidth=1.2;
+  ctx.beginPath();
+  ctx.moveTo(0,-e.h/2+16);ctx.lineTo(7,-e.h/2+22);
+  ctx.lineTo(0,-e.h/2+28);ctx.lineTo(-7,-e.h/2+22);
+  ctx.closePath();ctx.stroke();
+  // Inner diamond dot
+  ctx.fillStyle='#333';
+  ctx.beginPath();ctx.arc(0,-e.h/2+22,2,0,Math.PI*2);ctx.fill();
+
+  // Side decorative brackets
+  ctx.strokeStyle='#333'; ctx.lineWidth=1;
+  ctx.strokeRect(-e.w/2+6,-e.h/2+30,8,8);
+  ctx.strokeRect(e.w/2-14,-e.h/2+30,8,8);
+
+  // ── BELT ──
+  ctx.fillStyle='#222';
+  ctx.fillRect(-e.w/2+2,-e.h/2+46,e.w-4,6);
+  ctx.fillStyle='#3a3a3a';
+  ctx.fillRect(-e.w/2+3,-e.h/2+47,e.w-6,2);
+  // Belt buckle
+  ctx.fillStyle='#444';
+  ctx.fillRect(-5,-e.h/2+46,10,6);
+  ctx.strokeStyle='#555'; ctx.lineWidth=1;
+  ctx.strokeRect(-4,-e.h/2+47,8,4);
+
+  // ── LEGS with chain/panel details ──
+  ctx.fillStyle='#080808';
+  ctx.fillRect(-e.w/2+2,-e.h/2+52,e.w-4,e.h/2-4);
+  // Leg panel lines
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(-e.w/2+10,-e.h/2+54);ctx.lineTo(-e.w/2+10,e.h/2-4);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(e.w/2-10,-e.h/2+54);ctx.lineTo(e.w/2-10,e.h/2-4);ctx.stroke();
+  // Knee plates
+  ctx.fillStyle='#111';
+  ctx.fillRect(-e.w/2+4,-e.h/2+64,e.w/2-6,6);
+  ctx.fillRect(2,-e.h/2+64,e.w/2-6,6);
+  // Chain detail on thighs
+  ctx.strokeStyle='#252525'; ctx.lineWidth=1;
+  for(let ci=0;ci<3;ci++){
+    const cy=-e.h/2+56+ci*5;
+    ctx.beginPath();ctx.moveTo(-e.w/2+12,cy);ctx.lineTo(-e.w/2+8,cy+2);ctx.lineTo(-e.w/2+12,cy+4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(e.w/2-12,cy);ctx.lineTo(e.w/2-8,cy+2);ctx.lineTo(e.w/2-12,cy+4);ctx.stroke();
+  }
+
+  // ── ARMS ──
+  ctx.fillStyle='#0a0a0a';
+  ctx.fillRect(-e.w/2-2,-e.h/2+14,10,42);
+  ctx.fillRect(e.w/2-8,-e.h/2+14,10,42);
+  // Arm armor lines
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(-e.w/2+4,-e.h/2+18);ctx.lineTo(-e.w/2+4,-e.h/2+50);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(e.w/2-4,-e.h/2+18);ctx.lineTo(e.w/2-4,-e.h/2+50);ctx.stroke();
+
+  // ── HOOD ──
+  ctx.fillStyle='#050505';
+  ctx.beginPath();
+  ctx.ellipse(0,-e.h/2+8,26,24,0,0,Math.PI*2);
+  ctx.fill();
+  // Hood inner shadow
+  ctx.fillStyle='#030303';
+  ctx.beginPath();
+  ctx.ellipse(0,-e.h/2+10,18,17,0,0,Math.PI*2);
+  ctx.fill();
+
+  // ── HORNS (large, curved like image) ──
+  // Left horn
+  ctx.fillStyle='#0a0a0a';
+  ctx.beginPath();
+  ctx.moveTo(-10,-e.h/2-18);    // horn tip
+  ctx.quadraticCurveTo(-22,-e.h/2-2,-18,-e.h/2+8); // curve out
+  ctx.lineTo(-26,-e.h/2+8);
+  ctx.quadraticCurveTo(-20,-e.h/2+2,-8,-e.h/2+4);  // inner curve
+  ctx.closePath();
+  ctx.fill();
+  // Left horn white outline (bright like image)
+  ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.5;
+  ctx.beginPath();
+  ctx.moveTo(-10,-e.h/2-18);
+  ctx.quadraticCurveTo(-22,-e.h/2-2,-18,-e.h/2+8);
+  ctx.lineTo(-26,-e.h/2+8);
+  ctx.quadraticCurveTo(-20,-e.h/2+2,-8,-e.h/2+4);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Right horn
+  ctx.fillStyle='#0a0a0a';
+  ctx.beginPath();
+  ctx.moveTo(10,-e.h/2-18);
+  ctx.quadraticCurveTo(22,-e.h/2-2,18,-e.h/2+8);
+  ctx.lineTo(26,-e.h/2+8);
+  ctx.quadraticCurveTo(20,-e.h/2+2,8,-e.h/2+4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(10,-e.h/2-18);
+  ctx.quadraticCurveTo(22,-e.h/2-2,18,-e.h/2+8);
+  ctx.lineTo(26,-e.h/2+8);
+  ctx.quadraticCurveTo(20,-e.h/2+2,8,-e.h/2+4);
+  ctx.closePath();
+  ctx.stroke();
+
+  // ── SKULL FACE MASK ──
+  ctx.fillStyle='#030303';
+  ctx.fillRect(-18,-e.h/2,36,28);
+  ctx.fillStyle='#080808';
+  ctx.fillRect(-16,-e.h/2+2,32,24);
+
+  // Glowing white EYES (intense, angular like image)
+  ctx.fillStyle='#ffffff';
+  ctx.shadowColor='#ffffff'; ctx.shadowBlur=20;
+  // Left eye — angular slit shape
+  ctx.beginPath();
+  ctx.moveTo(-15,-e.h/2+5);
+  ctx.lineTo(-5,-e.h/2+5);
+  ctx.lineTo(-4,-e.h/2+11);
+  ctx.lineTo(-14,-e.h/2+12);
+  ctx.closePath();
+  ctx.fill();
+  // Right eye
+  ctx.beginPath();
+  ctx.moveTo(5,-e.h/2+5);
+  ctx.lineTo(15,-e.h/2+5);
+  ctx.lineTo(14,-e.h/2+12);
+  ctx.lineTo(4,-e.h/2+11);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur=0;
+
+  // Eye inner glow lines (like the angled glow lines in image)
+  ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(-13,-e.h/2+6);ctx.lineTo(-6,-e.h/2+6);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(6,-e.h/2+6);ctx.lineTo(13,-e.h/2+6);ctx.stroke();
+
+  // WIDE SKULL GRIN (like image — big toothy smile)
+  ctx.fillStyle='#030303';
+  ctx.fillRect(-17,-e.h/2+15,34,12);
+  // White teeth — detailed like image
+  ctx.fillStyle='#ffffff';
+  ctx.shadowColor='#ffffff'; ctx.shadowBlur=6;
+  const teethX = [-15,-11,-7,-3,1,5,9,13];
+  teethX.forEach(tx => {
+    ctx.fillRect(tx,-e.h/2+15,3,10);
+  });
+  // Tooth gaps (black)
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#030303';
+  [-13,-9,-5,-1,3,7,11].forEach(gx => {
+    ctx.fillRect(gx,-e.h/2+15,1,10);
+  });
+  // Gum line
+  ctx.fillStyle='#111';
+  ctx.fillRect(-17,-e.h/2+15,34,2);
+
+  // ── SINGLE WHITE LIGHTSABER (right hand, animated swing) ──
+  ctx.save();
+  const sw = Math.sin(t*0.003)*0.5 - 0.2;
+  ctx.translate(e.w/2-2,-e.h/2+30);
+  ctx.rotate(-sw);
+
+  // Handle — ornate black/silver
+  ctx.fillStyle='#1a1a1a';
+  ctx.fillRect(-4,0,8,20);
+  // Handle grip bands
+  ctx.fillStyle='#2a2a2a';
+  ctx.fillRect(-3,3,6,3);
+  ctx.fillRect(-3,9,6,3);
+  ctx.fillRect(-3,15,6,3);
+  // Handle accent ring
+  ctx.fillStyle='#555';
+  ctx.fillRect(-4,0,8,3);
+  ctx.fillRect(-4,17,8,3);
+  // Pommel
+  ctx.fillStyle='#333';
+  ctx.fillRect(-3,20,6,5);
+
+  // Cross guard (ornate T-shape)
+  ctx.fillStyle='#111';
+  ctx.fillRect(-10,2,20,5);
+  ctx.fillStyle='#222';
+  ctx.fillRect(-8,3,16,3);
+
+  // Blade glow (WHITE — intense)
+  ctx.shadowColor='#ffffff'; ctx.shadowBlur=35;
+  ctx.fillStyle='rgba(220,240,255,0.25)';
+  ctx.fillRect(-8,-75,16,75);    // outer glow width
+  ctx.shadowBlur=0;
+
+  ctx.shadowColor='#aaddff'; ctx.shadowBlur=20;
+  ctx.fillStyle='rgba(180,220,255,0.5)';
+  ctx.fillRect(-5,-75,10,75);   // mid glow
+
+  // Blade core — pure white
+  ctx.shadowColor='#ffffff'; ctx.shadowBlur=30;
+  ctx.fillStyle='#e8f4ff';
+  ctx.fillRect(-2.5,-75,5,75);
+  // Core center — brightest white
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(-1.5,-75,3,75);
+  // Tip sparkle
+  ctx.shadowBlur=40;
+  ctx.fillStyle='#ffffff';
+  ctx.fillRect(-2,-77,4,4);
+  ctx.shadowBlur=0;
+
+  ctx.restore();
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  ZOOM PREVENTION (pinch, double-tap, gesture)
+// ══════════════════════════════════════════════
+document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+document.addEventListener('gestureend', function(e) { e.preventDefault(); }, { passive: false });
+
+// Block pinch-zoom via touch
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function(e) {
+  const now = Date.now();
+  if (now - lastTouchEnd < 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+
+document.addEventListener('touchstart', function(e) {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchmove', function(e) {
+  if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+
+// Block ctrl+wheel zoom on desktop
+document.addEventListener('wheel', function(e) {
+  if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+
+game.totalStars = getTotalStars();
+updateTitleStars();
+loadSettings();
+updateTitleMenu();
+startStarWarsTheme();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
